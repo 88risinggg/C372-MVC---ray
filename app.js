@@ -1,4 +1,4 @@
-// Replace top-level requires with a safe try/catch so missing modules give a clear instruction
+
 let express, mysql, session, flash, multer, fs, path;
 try {
 	express = require('express');
