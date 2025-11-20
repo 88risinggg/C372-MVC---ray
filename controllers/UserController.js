@@ -1,80 +1,55 @@
-const Student = require('../models/Student');
+const express = require("express");
+const router = express.Router();
+const db = require("../db");
 
-const StudentController = {
-  // List all students and render index view
-  list(req, res) {
-    Student.getAll((err, students) => {
-      if (err) return res.status(500).send('Database error');
-      res.render('index', { students });
-    });
-  },
+// LOGIN PAGE
+router.get("/login", (req, res) => {
+    res.render("login", { error: null });
+});
 
-  // Show single student by ID and render student view
-  getById(req, res) {
-    const id = req.params.id;
-    Student.getById(id, (err, student) => {
-      if (err) return res.status(500).send('Database error');
-      if (!student) return res.status(404).send('Student not found');
-      res.render('student', { student });
-    });
-  },
+// REGISTER PAGE
+router.get("/register", (req, res) => {
+    res.render("register");
+});
 
-  // Render form for creating a new student
-  addForm(req, res) {
-    res.render('addStudent');
-  },
+// REGISTER
+router.post("/register", (req, res) => {
+    const { username, email, password, address, contact } = req.body;
 
-  // Create a new student (expects form data and optional uploaded file)
-  add(req, res) {
-    const student = {
-      name: req.body.name,
-      dob: req.body.dob,
-      contact: req.body.contact,
-      image: (req.file && req.file.filename) || req.body.image || null
-    };
+    db.query(
+        "INSERT INTO users (username, email, password, address, contact, role) VALUES (?, ?, SHA1(?), ?, ?, 'user')",
+        [username, email, password, address, contact],
+        (err) => {
+            if (err) throw err;
+            res.redirect("/users/login");
+        }
+    );
+});
 
-    Student.create(student, (err, result) => {
-      if (err) return res.status(500).send('Database error');
-      res.redirect('/');
-    });
-  },
+// LOGIN
+router.post("/login", (req, res) => {
+    const { email, password } = req.body;
 
-  // Render edit form for a student (fetches student then renders edit view)
-  editForm(req, res) {
-    const id = req.params.id;
-    Student.getById(id, (err, student) => {
-      if (err) return res.status(500).send('Database error');
-      if (!student) return res.status(404).send('Student not found');
-      res.render('editStudent', { student });
-    });
-  },
+    db.query(
+        "SELECT * FROM users WHERE email = ? AND password = SHA1(?)",
+        [email, password],
+        (err, result) => {
+            if (err) throw err;
 
-  // Update an existing student by ID (expects form data and optional uploaded file)
-  update(req, res) {
-    const id = req.params.id;
-    const student = {
-      name: req.body.name,
-      dob: req.body.dob,
-      contact: req.body.contact,
-      image: (req.file && req.file.filename) || req.body.currentImage || null
-    };
+            if (result.length === 1) {
+                req.session.user = result[0];
+                res.redirect("/products");
+            } else {
+                res.render("login", { error: "Invalid email or password" });
+            }
+        }
+    );
+});
 
-    Student.update(id, student, (err, result) => {
-      if (err) return res.status(500).send('Database error');
-      if (result && result.affectedRows === 0) return res.status(404).send('Student not found');
-      res.redirect(`/student/${id}`);
-    });
-  },
+// LOGOUT
+router.get("/logout", (req, res) => {
+    req.session.destroy();
+    res.redirect("/users/login");
+});
 
-  // Delete a student by ID
-  delete(req, res) {
-    const id = req.params.id;
-    Student.delete(id, (err, result) => {
-      if (err) return res.status(500).send('Database error');
-      if (result && result.affectedRows === 0) return res.status(404).send('Student not found');
-      res.redirect('/');
-    });
-  }
-};
-
-module.exports = StudentController;
+module.exports = router;

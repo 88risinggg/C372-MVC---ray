@@ -1,47 +1,28 @@
-const db = require('../db');
+const db = require("../db");
 
-const Student = {
-  getAll(callback) {
-    const sql = 'SELECT studentId, name, dob, contact, image FROM students';
-    db.query(sql, (err, results) => {
-      if (err) return callback(err);
-      callback(null, results);
-    });
-  },
+class User {
 
-  getById(id, callback) {
-    const sql = 'SELECT studentId, name, dob, contact, image FROM students WHERE studentId = ?';
-    db.query(sql, [id], (err, results) => {
-      if (err) return callback(err);
-      callback(null, results[0] || null);
-    });
-  },
+    static findByEmail(email) {
+        return new Promise((resolve, reject) => {
+            db.query("SELECT * FROM users WHERE email = ?", [email], (err, result) => {
+                if (err) reject(err);
+                else resolve(result[0]);
+            });
+        });
+    }
 
-  create(student, callback) {
-    const sql = 'INSERT INTO students (name, dob, contact, image) VALUES (?, ?, ?, ?)';
-    const params = [student.name, student.dob, student.contact, student.image];
-    db.query(sql, params, (err, result) => {
-      if (err) return callback(err);
-      callback(null, { insertId: result.insertId });
-    });
-  },
+    static create(username, email, password, address, contact) {
+        return new Promise((resolve, reject) => {
+            db.query(
+                "INSERT INTO users (username, email, password, address, contact, role) VALUES (?, ?, SHA1(?), ?, ?, 'user')",
+                [username, email, password, address, contact],
+                (err, result) => {
+                    if (err) reject(err);
+                    else resolve(result.insertId);
+                }
+            );
+        });
+    }
+}
 
-  update(id, student, callback) {
-    const sql = 'UPDATE students SET name = ?, dob = ?, contact = ?, image = ? WHERE studentId = ?';
-    const params = [student.name, student.dob, student.contact, student.image, id];
-    db.query(sql, params, (err, result) => {
-      if (err) return callback(err);
-      callback(null, result);
-    });
-  },
-
-  delete(id, callback) {
-    const sql = 'DELETE FROM students WHERE studentId = ?';
-    db.query(sql, [id], (err, result) => {
-      if (err) return callback(err);
-      callback(null, result);
-    });
-  }
-};
-
-module.exports = Student;
+module.exports = User;
