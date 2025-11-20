@@ -1,35 +1,69 @@
+// controllers/ProductController.js
+
 const express = require("express");
 const router = express.Router();
 const db = require("../db");
+const multer = require("multer");
+const path = require("path");
 
-// LIST PRODUCTS
+// =========================
+// IMAGE UPLOAD SETTINGS
+// =========================
+const storage = multer.diskStorage({
+    destination: function (req, file, cb) {
+        cb(null, "public/images/");
+    },
+    filename: function (req, file, cb) {
+        cb(null, Date.now() + path.extname(file.originalname));
+    }
+});
+const upload = multer({ storage: storage });
+
+// =========================
+// LIST PRODUCTS (SHOP)
+// =========================
 router.get("/", (req, res) => {
     db.query("SELECT * FROM products", (err, products) => {
         if (err) throw err;
-        res.render("index", { products });
+
+        res.render("shopping", {
+            user: req.session.user,
+            products
+        });
     });
 });
 
-// SHOW ONE PRODUCT
-router.get("/view/:id", (req, res) => {
+// =========================
+// VIEW ONE PRODUCT
+// =========================
+router.get("/:id", (req, res) => {
     db.query("SELECT * FROM products WHERE id = ?", [req.params.id], (err, rows) => {
         if (err) throw err;
-        res.render("product", { product: rows[0] });
+
+        res.render("product", {
+            user: req.session.user,
+            product: rows[0]
+        });
     });
 });
 
-// ADD PRODUCT PAGE
+// =========================
+// ADD PRODUCT PAGE (ADMIN)
+// =========================
 router.get("/admin/add", (req, res) => {
-    res.render("addProduct");
+    res.render("addProduct", { user: req.session.user });
 });
 
-// ADD PRODUCT
-router.post("/admin/add", (req, res) => {
-    const { productName, quantity, price, image } = req.body;
+// =========================
+// ADD PRODUCT (ADMIN)
+// =========================
+router.post("/admin/add", upload.single("image"), (req, res) => {
+    const { name, quantity, price } = req.body;
+    const image = req.file ? req.file.filename : null;
 
     db.query(
         "INSERT INTO products (productName, quantity, price, image) VALUES (?, ?, ?, ?)",
-        [productName, quantity, price, image],
+        [name, quantity, price, image],
         (err) => {
             if (err) throw err;
             res.redirect("/products");
@@ -37,21 +71,32 @@ router.post("/admin/add", (req, res) => {
     );
 });
 
-// EDIT PRODUCT PAGE
+// =========================
+// EDIT PRODUCT PAGE (ADMIN)
+// =========================
 router.get("/admin/edit/:id", (req, res) => {
     db.query("SELECT * FROM products WHERE id = ?", [req.params.id], (err, rows) => {
         if (err) throw err;
-        res.render("editProduct", { product: rows[0] });
+
+        res.render("updateProduct", {
+            user: req.session.user,
+            product: rows[0]
+        });
     });
 });
 
-// EDIT PRODUCT
-router.post("/admin/edit/:id", (req, res) => {
-    const { productName, quantity, price, image } = req.body;
+// =========================
+// EDIT PRODUCT (ADMIN)
+// =========================
+router.post("/admin/edit/:id", upload.single("image"), (req, res) => {
+    const { name, quantity, price, currentImage } = req.body;
+
+    // Use new image if uploaded
+    const image = req.file ? req.file.filename : currentImage;
 
     db.query(
         "UPDATE products SET productName=?, quantity=?, price=?, image=? WHERE id=?",
-        [productName, quantity, price, image, req.params.id],
+        [name, quantity, price, image, req.params.id],
         (err) => {
             if (err) throw err;
             res.redirect("/products");
@@ -59,7 +104,9 @@ router.post("/admin/edit/:id", (req, res) => {
     );
 });
 
-// DELETE PRODUCT
+// =========================
+// DELETE PRODUCT (ADMIN)
+// =========================
 router.get("/admin/delete/:id", (req, res) => {
     db.query("DELETE FROM products WHERE id = ?", [req.params.id], (err) => {
         if (err) throw err;

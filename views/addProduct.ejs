@@ -3,29 +3,42 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <!-- Bootstrap -->
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
-  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
-  <title>Supermarket App</title>
+
+  <!-- Custom CSS -->
+  <link rel="stylesheet" href="/css/style.css">
+
+  <title>Add Product</title>
 </head>
+
 <body>
+
   <!-- Navbar -->
   <nav class="navbar navbar-expand-sm bg-dark navbar-dark">
     <div class="container-fluid">
-      <a class="navbar-brand" href="/">Supermarket App</a>
+      <a class="navbar-brand" href="/products">Supermarket App</a>
+
       <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#collapsibleNavbar">
         <span class="navbar-toggler-icon"></span>
       </button>
+
       <div class="collapse navbar-collapse" id="collapsibleNavbar">
-        <ul class="navbar-nav">
+        <ul class="navbar-nav ms-auto">
+
           <li class="nav-item">
-            <a class="nav-link" href="/inventory">Inventory</a>
-          </li> 
+            <a class="nav-link" href="/products">Inventory</a>
+          </li>
+
           <li class="nav-item">
-            <a class="nav-link" href="/addProduct">Add New Product</a>
-          </li> 
+            <a class="nav-link" href="/products/admin/add">Add Product</a>
+          </li>
+
           <li class="nav-item">
             <a class="nav-link" href="/logout">Logout</a>
-          </li> 
+          </li>
+
         </ul>
       </div>
     </div>
@@ -34,16 +47,17 @@
   <!-- Main Content -->
   <div class="container mt-4">
     <h2 class="text-center mb-4">Add New Product</h2>
-    <form action="/addProduct" method="POST" enctype="multipart/form-data" class="mx-auto" style="max-width: 500px;">
+
+    <form action="/products/admin/add" method="POST" enctype="multipart/form-data" class="mx-auto form-box" style="max-width: 500px;">
 
       <div class="mb-3">
-        <label for="name" class="form-label">Product Name</label>
-        <input type="text" class="form-control" id="name" name="name" required>
+        <label for="productName" class="form-label">Product Name</label>
+        <input type="text" class="form-control" id="productName" name="productName" required>
       </div>
 
       <div class="mb-3">
         <label for="quantity" class="form-label">Quantity</label>
-        <input type="number" class="form-control" id="quantity" name="quantity" min="0" step="1" required>
+        <input type="number" class="form-control" id="quantity" name="quantity" min="0" required>
       </div>
 
       <div class="mb-3">
@@ -51,16 +65,26 @@
         <input type="number" class="form-control" id="price" name="price" min="0" step="0.01" required>
       </div>
 
+      <div class="mb-3">
+      <label for="category" class="form-label">Category</label>
+        <select class="form-select" id="category" name="category" required>
+            <option value="Fruits">Fruits</option>
+            <option value="Snacks">Snacks</option>
+            <option value="Drinks">Drinks</option>
+            <option value="Household">Household</option>
+            <option value="Others">Others</option>
+        </select>
+    </div>
+
       <div class="mb-4">
         <label for="image" class="form-label">Product Image</label>
         <input class="form-control" type="file" id="image" name="image" accept="image/*" required>
       </div>
 
-      <div class="d-grid">
-        <button type="submit" class="btn btn-primary">Add Product</button>
-      </div>
+      <button type="submit" class="btn btn-primary w-100">Add Product</button>
 
     </form>
   </div>
+
 </body>
 </html>
