@@ -222,6 +222,140 @@ app.get('/cart', checkAuthenticated, (req, res) => {
     res.render('cart', { cart, user: req.session.user });
 });
 
+// Update quantity in cart
+app.post('/cart/update/:id', checkAuthenticated, (req, res) => {
+    const productId = parseInt(req.params.id);
+    const quantity = Math.max(1, parseInt(req.body.quantity) || 1);
+
+    if (req.session.cart) {
+        const item = req.session.cart.find(i => i.id === productId);
+        if (item) {
+            item.quantity = quantity;
+        }
+    }
+    res.redirect('/cart');
+});
+
+// Remove item from cart
+app.post('/cart/remove/:id', checkAuthenticated, (req, res) => {
+    const productId = parseInt(req.params.id);
+    if (req.session.cart) {
+        req.session.cart = req.session.cart.filter(item => item.id !== productId);
+    }
+    res.redirect('/cart');
+});
+
+// Checkout page (simulated payment)
+app.get('/checkout', checkAuthenticated, (req, res) => {
+    const cart = req.session.cart || [];
+    if (!cart.length) {
+        req.flash('error', 'Your cart is empty.');
+        return res.redirect('/shopping');
+    }
+    const total = cart.reduce((sum, item) => sum + item.price * item.quantity, 0);
+    res.render('checkout', { cart, total, user: req.session.user, errors: req.flash('error') });
+});
+
+// Submit checkout and create order + order items
+app.post('/checkout', checkAuthenticated, (req, res) => {
+    const cart = req.session.cart || [];
+    if (!cart.length) {
+        req.flash('error', 'Your cart is empty.');
+        return res.redirect('/shopping');
+    }
+
+    const total = cart.reduce((sum, item) => sum + item.price * item.quantity, 0);
+    connection.query(
+        'INSERT INTO orders (user_id, total) VALUES (?, ?)',
+        [req.session.user.id, total],
+        (err, orderResult) => {
+            if (err) {
+                console.error('Error creating order:', err);
+                req.flash('error', 'Could not complete checkout. Please try again.');
+                return res.redirect('/checkout');
+            }
+
+            const orderId = orderResult.insertId;
+            const tasks = cart.map(item => {
+                return new Promise((resolve, reject) => {
+                    connection.query(
+                        'INSERT INTO order_items (order_id, product_id, quantity, price) VALUES (?, ?, ?, ?)',
+                        [orderId, item.id, item.quantity, item.price],
+                        (err2) => {
+                            if (err2) reject(err2);
+                            else resolve();
+                        }
+                    );
+                });
+            });
+
+            Promise.all(tasks)
+                .then(() => {
+                    req.session.cart = [];
+                    res.render('paymentSuccess', { orderId, total, user: req.session.user });
+                })
+                .catch(insertErr => {
+                    console.error('Error saving order items:', insertErr);
+                    req.flash('error', 'Could not save order items. Please try again.');
+                    res.redirect('/checkout');
+                });
+        }
+    );
+});
+
+// Order history
+app.get('/orders', checkAuthenticated, (req, res) => {
+    connection.query(
+        'SELECT * FROM orders WHERE user_id = ? ORDER BY created_at DESC',
+        [req.session.user.id],
+        (err, orders) => {
+            if (err) {
+                console.error('Error fetching orders:', err);
+                req.flash('error', 'Could not load order history.');
+                return res.redirect('/shopping');
+            }
+            res.render('orderHistory', { orders, user: req.session.user, errors: req.flash('error') });
+        }
+    );
+});
+
+// Order details
+app.get('/orders/:id', checkAuthenticated, (req, res) => {
+    const orderId = parseInt(req.params.id);
+    connection.query(
+        'SELECT * FROM orders WHERE id = ? AND user_id = ?',
+        [orderId, req.session.user.id],
+        (err, orderRows) => {
+            if (err) {
+                console.error('Error fetching order:', err);
+                req.flash('error', 'Could not load order details.');
+                return res.redirect('/orders');
+            }
+            if (!orderRows || !orderRows.length) {
+                req.flash('error', 'Order not found.');
+                return res.redirect('/orders');
+            }
+
+            const order = orderRows[0];
+            connection.query(
+                `SELECT order_items.*, products.productName, products.image
+                 FROM order_items
+                 JOIN products ON order_items.product_id = products.id
+                 WHERE order_items.order_id = ?`,
+                [orderId],
+                (err2, items) => {
+                    if (err2) {
+                        console.error('Error loading order items:', err2);
+                        req.flash('error', 'Could not load order items.');
+                        return res.redirect('/orders');
+                    }
+                    res.render('orderDetails', { order, items, user: req.session.user, errors: req.flash('error') });
+                }
+            );
+        }
+    );
+});
+
 app.get('/logout', (req, res) => {
     req.session.destroy();
     res.redirect('/');
