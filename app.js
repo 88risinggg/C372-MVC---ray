@@ -169,11 +169,27 @@ const attachUser = (req, res, next) => {
 
 // INVENTORY (admin only)
 app.get("/inventory", checkAuthenticated, checkAdmin, (req, res) => {
-    connection.query("SELECT * FROM products", (err, results) => {
+    const search = req.query.search;
+
+    let sql = "SELECT * FROM products";
+    let params = [];
+
+    if (search) {
+        sql += " WHERE productName LIKE ?";
+        params.push(`%${search}%`);
+    }
+
+    connection.query(sql, params, (err, results) => {
         if (err) throw err;
-        res.render("inventory", { products: results, user: req.session.user });
+
+        res.render("inventory", {
+            products: results,
+            user: req.session.user,
+            search
+        });
     });
 });
+
 
 // SHOPPING PAGE (supports optional search and category filters)
 app.get("/shopping", attachUser, (req, res) => {
@@ -245,6 +261,75 @@ app.post("/products/admin/edit/:id", checkAuthenticated, checkAdmin, upload.sing
     );
 });
 
+// ADMIN — VIEW ALL ORDERS
+app.get("/admin/orders", checkAuthenticated, checkAdmin, (req, res) => {
+    const sql = `
+        SELECT orders.*, users.username 
+        FROM orders 
+        JOIN users ON orders.user_id = users.id
+        ORDER BY orders.created_at DESC
+    `;
+
+    connection.query(sql, (err, results) => {
+        if (err) throw err;
+
+        res.render("adminOrders", {
+            user: req.session.user,
+            orders: results
+        });
+    });
+});
+
+// ADMIN — VIEW ORDER DETAILS
+app.get("/admin/orders/:id", checkAuthenticated, checkAdmin, (req, res) => {
+    const orderId = req.params.id;
+
+    connection.query(
+        `SELECT orders.*, users.username, users.email 
+         FROM orders 
+         JOIN users ON orders.user_id = users.id
+         WHERE orders.id = ?`,
+        [orderId],
+        (err, rows) => {
+            if (err) throw err;
+            if (rows.length === 0) return res.redirect("/admin/orders");
+
+            const order = rows[0];
+
+            connection.query(
+                `SELECT oi.*, p.productName, p.image 
+                 FROM order_items oi
+                 JOIN products p ON oi.product_id = p.id
+                 WHERE oi.order_id = ?`,
+                [orderId],
+                (err2, items) => {
+                    if (err2) throw err2;
+
+                    res.render("adminOrderDetails", {
+                        order,
+                        items,
+                        user: req.session.user
+                    });
+                }
+            );
+        }
+    );
+});
+
+// ADMIN: Update order status
+app.post("/admin/orders/:id/status", checkAuthenticated, checkAdmin, (req, res) => {
+    const { orderStatus } = req.body;
+
+    connection.query(
+        "UPDATE orders SET orderStatus = ? WHERE id = ?",
+        [orderStatus, req.params.id],
+        (err) => {
+            if (err) throw err;
+            res.redirect(`/admin/orders/${req.params.id}`);
+        }
+    );
+});
+
 // ADMIN: Delete product
 app.get("/products/admin/delete/:id", checkAuthenticated, checkAdmin, (req, res) => {
     connection.query("DELETE FROM products WHERE id = ?", [req.params.id], err => {
@@ -311,16 +396,17 @@ app.post("/cart/update/:id", checkAuthenticated, (req, res) => {
 
 // Checkout page
 app.get("/checkout", checkAuthenticated, (req, res) => {
-    const cart = req.session.cart || [];
-    if (!cart.length) {
+    const items = req.session.cart || [];
+
+    if (!items.length) {
         req.flash("error", "Your cart is empty.");
         return res.redirect("/shopping");
     }
 
-    const total = cart.reduce((sum, i) => sum + i.price * i.quantity, 0);
+    const total = items.reduce((sum, i) => sum + i.price * i.quantity, 0);
 
     res.render("checkout", {
-        cart,
+        items,         // <<< FIXED
         total,
         user: req.session.user,
         errors: req.flash("error")
@@ -330,38 +416,95 @@ app.get("/checkout", checkAuthenticated, (req, res) => {
 // Submit checkout
 app.post("/checkout", checkAuthenticated, (req, res) => {
     const cart = req.session.cart || [];
-    const total = cart.reduce((sum, i) => sum + i.price * i.quantity, 0);
 
-    connection.query(
-        "INSERT INTO orders (user_id, total) VALUES (?, ?)",
-        [req.session.user.id, total],
-        (err, orderResult) => {
-            if (err) throw err;
+    if (!cart.length) {
+        req.flash("error", "Your cart is empty.");
+        return res.redirect("/shopping");
+    }
 
-            const orderId = orderResult.insertId;
+    // Step 1 — Validate stock BEFORE placing order
+    const stockChecks = cart.map(item => {
+        return new Promise((resolve, reject) => {
+            connection.query(
+                "SELECT quantity FROM products WHERE id = ?",
+                [item.id],
+                (err, rows) => {
+                    if (err) return reject(err);
 
-            const tasks = cart.map(item => {
-                return new Promise((resolve, reject) => {
-                    connection.query(
-                        "INSERT INTO order_items (order_id, product_id, quantity, price) VALUES (?, ?, ?, ?)",
-                        [orderId, item.id, item.quantity, item.price],
-                        err2 => err2 ? reject(err2) : resolve()
-                    );
-                });
-            });
+                    const available = rows[0].quantity;
 
-            Promise.all(tasks)
-            .then(() => {
-                req.session.cart = [];
-                res.render("paymentSuccess", { orderId, total, user: req.session.user });
-            })
-            .catch(() => {
-                req.flash("error", "Order failed. Try again.");
-                res.redirect("/checkout");
-            });
-        }
-    );
+                    if (available < item.quantity) {
+                        return reject(
+                            `${item.productName} only has ${available} left in stock.`
+                        );
+                    }
+
+                    resolve();
+                }
+            );
+        });
+    });
+
+    Promise.all(stockChecks)
+        .then(() => {
+            // Step 2 — Insert order
+            const total = cart.reduce((sum, i) => sum + i.price * i.quantity, 0);
+
+            connection.query(
+                "INSERT INTO orders (user_id, total) VALUES (?, ?)",
+                [req.session.user.id, total],
+                (err, orderResult) => {
+                    if (err) throw err;
+
+                    const orderId = orderResult.insertId;
+
+                    // Step 3 — Insert order items + reduce product stock
+                    const tasks = cart.map(item => {
+                        return new Promise((resolve, reject) => {
+                            // Insert order item first
+                            connection.query(
+                                "INSERT INTO order_items (order_id, product_id, quantity, price) VALUES (?, ?, ?, ?)",
+                                [orderId, item.id, item.quantity, item.price],
+                                (err1) => {
+                                    if (err1) return reject(err1);
+
+                                    // Reduce stock
+                                    connection.query(
+                                        "UPDATE products SET quantity = quantity - ? WHERE id = ?",
+                                        [item.quantity, item.id],
+                                        (err2) => {
+                                            if (err2) return reject(err2);
+                                            resolve();
+                                        }
+                                    );
+                                }
+                            );
+                        });
+                    });
+
+                    Promise.all(tasks)
+                        .then(() => {
+                            req.session.cart = []; // empty cart
+                            res.render("paymentSuccess", {
+                                orderId,
+                                total,
+                                user: req.session.user
+                            });
+                        })
+                        .catch(err => {
+                            console.log("Stock or insert error:", err);
+                            req.flash("error", "Order failed: " + err);
+                            res.redirect("/checkout");
+                        });
+                }
+            );
+        })
+        .catch(err => {
+            req.flash("error", err);
+            res.redirect("/cart"); // bounce user back to cart
+        });
 });
+
 
 // View orders
 app.get("/orders", checkAuthenticated, (req, res) => {

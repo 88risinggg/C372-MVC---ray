@@ -7,7 +7,9 @@
   <!-- Bootstrap -->
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
 
-  <!-- Custom CSS -->
+  <!-- SweetAlert2 -->
+  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
   <link rel="stylesheet" href="/css/style.css">
 
   <title>Edit Product</title>
@@ -18,43 +20,30 @@
 <!-- Navbar -->
 <nav class="navbar navbar-expand-sm bg-dark navbar-dark shadow-sm">
   <div class="container-fluid">
-
-    <a class="navbar-brand fw-bold" href="/">Supermarket App</a>
-
-    <button class="navbar-toggler" type="button" data-bs-toggle="collapse"
-            data-bs-target="#collapsibleNavbar">
+    <a class="navbar-brand fw-bold" href="/">Grow Mart</a>
+    <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#collapsibleNavbar">
       <span class="navbar-toggler-icon"></span>
     </button>
 
     <div class="collapse navbar-collapse" id="collapsibleNavbar">
       <ul class="navbar-nav ms-auto">
-
-        <li class="nav-item">
-          <a class="nav-link" href="/inventory">Inventory</a>
-        </li>
-
-        <li class="nav-item">
-          <a class="nav-link" href="/products/admin/add">Add Product</a>
-        </li>
-
-        <li class="nav-item">
-          <a class="nav-link" href="/logout">Logout</a>
-        </li>
-
+        <li class="nav-item"><a class="nav-link" href="/inventory">Inventory</a></li>
+        <li class="nav-item"><a class="nav-link" href="/products/admin/add">Add Product</a></li>
+        <li class="nav-item"><a class="nav-link" href="/logout">Logout</a></li>
       </ul>
     </div>
-
   </div>
 </nav>
 
-<!-- Main Page -->
+
 <div class="container py-4">
 
   <h2 class="text-center mb-4">Update Product</h2>
 
   <% if (product) { %>
 
-    <form action="/products/admin/edit/<%= product.id %>"
+    <form id="updateForm"
+          action="/products/admin/edit/<%= product.id %>"
           method="POST"
           enctype="multipart/form-data"
           class="mx-auto form-box glass p-4"
@@ -63,30 +52,19 @@
       <!-- Product Name -->
       <div class="mb-3">
         <label class="form-label fw-semibold">Product Name</label>
-        <input type="text" class="form-control"
-               name="name"
-               value="<%= product.productName %>"
-               required>
+        <input type="text" class="form-control" name="name" value="<%= product.productName %>" required>
       </div>
 
       <!-- Quantity -->
       <div class="mb-3">
         <label class="form-label fw-semibold">Quantity</label>
-        <input type="number" class="form-control"
-               name="quantity"
-               min="0" step="1"
-               value="<%= product.quantity %>"
-               required>
+        <input type="number" class="form-control" name="quantity" min="0" step="1" value="<%= product.quantity %>" required>
       </div>
 
       <!-- Price -->
       <div class="mb-3">
         <label class="form-label fw-semibold">Price ($)</label>
-        <input type="number" class="form-control"
-               name="price"
-               step="0.01" min="0"
-               value="<%= product.price %>"
-               required>
+        <input type="number" class="form-control" name="price" step="0.01" min="0" value="<%= product.price %>" required>
       </div>
 
       <!-- Category -->
@@ -109,38 +87,58 @@
       <!-- Current Image -->
       <div class="mb-3">
         <label class="form-label fw-semibold">Current Image</label>
-        <input type="text" class="form-control"
-               name="currentImage"
-               value="<%= product.image %>"
-               readonly>
-
-        <img src="/images/<%= product.image %>"
-             class="img-thumbnail mt-2 shadow-sm"
-             style="width: 150px; border-radius: 10px;">
+        <input type="text" class="form-control" name="currentImage" value="<%= product.image %>" readonly>
+        <img src="/images/<%= product.image %>" class="img-thumbnail mt-2 shadow-sm" style="width: 150px; border-radius: 10px;">
       </div>
 
-      <!-- Upload New Image -->
+      <!-- New Image -->
       <div class="mb-4">
         <label class="form-label fw-semibold">Replace Image</label>
-        <input type="file" class="form-control"
-               name="image" accept="image/*">
+        <input type="file" class="form-control" name="image" accept="image/*">
       </div>
 
-      <!-- Buttons -->
       <div class="d-grid gap-2">
-        <button type="submit" class="btn btn-primary">Save Changes</button>
+        <button type="button" id="saveBtn" class="btn btn-primary">Save Changes</button>
         <a href="/inventory" class="btn btn-secondary">Back to Inventory</a>
       </div>
 
     </form>
 
   <% } else { %>
-
     <p class="text-center text-danger">Product not found.</p>
-
   <% } %>
 
 </div>
+
+<!-- SWEETALERT2 SCRIPT -->
+<script>
+document.getElementById("saveBtn").addEventListener("click", function () {
+    Swal.fire({
+        title: "Save changes?",
+        text: "Are you sure you want to update this product?",
+        icon: "warning",
+        showCancelButton: true,
+        confirmButtonText: "Yes, update",
+        cancelButtonText: "Cancel",
+        reverseButtons: true
+    }).then((result) => {
+        if (result.isConfirmed) {
+
+            Swal.fire({
+                title: "Updated!",
+                text: "Product changes saved successfully.",
+                icon: "success",
+                showConfirmButton: false,
+                timer: 1500
+            });
+
+            setTimeout(() => {
+                document.getElementById("updateForm").submit();
+            }, 1500);
+        }
+    });
+});
+</script>
 
 </body>
 </html>
