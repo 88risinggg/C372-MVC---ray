@@ -3,127 +3,161 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Shop Products</title>
 
-  <!-- Bootstrap -->
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
-
-  <!-- Custom CSS -->
   <link rel="stylesheet" href="/css/style.css">
-
-  <title>Shop - Supermarket App</title>
 </head>
 
 <body class="page">
 
-  <!-- Navbar -->
-  <nav class="navbar navbar-expand-sm bg-dark navbar-dark shadow-sm">
-    <div class="container-fluid">
+<!-- NAVBAR -->
+<nav class="navbar navbar-expand-sm navbar-dark shadow-sm">
+  <div class="container-fluid">
+    <a class="navbar-brand fw-bold" href="/">Supermarket App</a>
 
-      <a class="navbar-brand fw-bold" href="/products">Supermarket App</a>
+    <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#nav">
+      <span class="navbar-toggler-icon"></span>
+    </button>
 
-      <button class="navbar-toggler" type="button" data-bs-toggle="collapse"
-              data-bs-target="#collapsibleNavbar">
-        <span class="navbar-toggler-icon"></span>
-      </button>
-
-      <div class="collapse navbar-collapse" id="collapsibleNavbar">
-        <ul class="navbar-nav ms-auto">
-
-          <li class="nav-item">
-            <a class="nav-link" href="/cart">View Cart</a>
-          </li>
-
-          <li class="nav-item">
-            <a class="nav-link" href="/orders/history">My Orders</a>
-          </li>
-
-          <li class="nav-item">
-            <a class="nav-link" href="/logout">Logout</a>
-          </li>
-
-        </ul>
-      </div>
-
+    <div class="collapse navbar-collapse" id="nav">
+      <ul class="navbar-nav ms-auto">
+        <li class="nav-item"><a class="nav-link" href="/cart">View Cart</a></li>
+        <li class="nav-item"><a class="nav-link" href="/orders">My Orders</a></li>
+        <li class="nav-item"><a class="nav-link" href="/logout">Logout</a></li>
+      </ul>
     </div>
-  </nav>
+  </div>
+</nav>
 
-  <!-- Page Container -->
-  <div class="container py-4">
 
-    <!-- Welcome Header -->
-    <div class="d-flex align-items-center justify-content-between mb-3">
-      <div>
-        <p class="text-muted small mb-0">Welcome back</p>
-        <p class="fw-semibold mb-0"><%= user.username %> (<%= user.role %>)</p>
-      </div>
+<div class="container py-4">
 
-      <div class="text-end">
-        <span class="badge text-bg-primary">New Arrivals</span>
-      </div>
+  <!-- Greeting -->
+  <div class="d-flex align-items-center justify-content-between mb-3">
+    <div>
+      <p class="text-muted small mb-0">Welcome back</p>
+      <p class="fw-semibold mb-0"><%= user.username %> (<%= user.role %>)</p>
     </div>
+  </div>
 
-    <!-- Page Title -->
-    <div class="text-center mb-4">
-      <h2 class="mb-1">Fresh picks from our Supermarket</h2>
-      <p class="text-muted">Browse, add to cart, and check out securely.</p>
-    </div>
 
-    <!-- Product Grid -->
-    <div class="row g-4">
-      <% products.forEach(product => { %>
-        <div class="col-12 col-sm-6 col-md-4 col-lg-3">
+  <!-- ============================ -->
+  <!-- SEARCH BAR -->
+  <!-- ============================ -->
+  <form action="/shopping" method="GET" class="input-group mb-4 shadow-sm">
+    <input 
+      type="text" 
+      class="form-control" 
+      placeholder="Search for products..." 
+      name="search"
+      value="<%= typeof search !== 'undefined' ? search : '' %>"
+    >
+    <button class="btn btn-primary">Search</button>
+  </form>
 
-          <div class="card product-card h-100 shadow-sm glass">
 
-            <!-- Product Image -->
-            <div class="ratio ratio-4x3">
-              <img src="/images/<%= product.image %>" 
-                   class="object-fit-cover rounded-top" 
-                   alt="<%= product.productName %>">
-            </div>
+  <!-- ============================ -->
+  <!-- CATEGORY FILTER -->
+  <!-- ============================ -->
+  <%
+    const categories = [
+      "All",
+      "Fresh Produce",
+      "Dairy & Eggs",
+      "Meat & Seafood",
+      "Bakery",
+      "Beverages",
+      "Snacks",
+      "Frozen",
+      "Household Essentials",
+      "Baby & Kids",
+      "Other"
+    ];
+  %>
 
-            <!-- Product Info -->
-            <div class="card-body d-flex flex-column">
+  <div class="d-flex flex-wrap gap-2 mb-4">
+    <% categories.forEach(c => { %>
+      <a 
+        href="/shopping<%= c !== 'All' ? ('?category=' + c) : '' %>" 
+        class="btn btn-sm <%= (category === c) ? 'btn-primary' : 'btn-outline-primary' %>"
+      >
+        <%= c %>
+      </a>
+    <% }) %>
+  </div>
 
-              <h5 class="card-title">
-                <a href="/products/<%= product.id %>" 
-                   class="link-dark text-decoration-none">
-                  <%= product.productName %>
-                </a>
-              </h5>
 
-              <p class="text-muted small mb-1">Stock: <%= product.quantity %></p>
+  <!-- ============================ -->
+  <!-- PRODUCT GRID -->
+  <!-- ============================ -->
+  <div class="row g-4">
 
-              <p class="fw-bold h5">$<%= product.price.toFixed(2) %></p>
+    <% if (products.length === 0) { %>
+      <div class="text-center mt-5">
+        <h4 class="text-muted">No products found.</h4>
+      </div>
+    <% } %>
 
-              <!-- Add to Cart -->
-              <div class="mt-auto">
+    <% products.forEach(p => { %>
+      <div class="col-12 col-sm-6 col-md-4 col-lg-3">
+        <div class="card product-card h-100 shadow-sm">
 
-                <div class="d-flex align-items-center mb-2">
-                  <label class="text-muted small me-2 mb-0">Qty</label>
-                  <select class="form-select form-select-sm"
-                          onchange="document.getElementById('qty-<%= product.id %>').value = this.value">
-                    <% for (let q = 1; q <= Math.min(5, product.quantity); q++) { %>
-                      <option value="<%= q %>"><%= q %></option>
-                    <% } %>
-                  </select>
-                </div>
-
-                <form action="/cart/add/<%= product.id %>" method="POST">
-                  <input type="hidden" name="quantity" id="qty-<%= product.id %>" value="1">
-                  <button type="submit" class="btn btn-primary w-100">Add to Cart</button>
-                </form>
-
-              </div>
-
-            </div>
+          <!-- Product Image -->
+          <div class="ratio ratio-4x3">
+            <img 
+              src="/images/<%= p.image %>"
+              class="object-fit-cover rounded-top"
+              alt="<%= p.productName %>"
+            >
           </div>
 
+          <div class="card-body d-flex flex-column">
+
+            <h5 class="card-title">
+              <a href="/product/<%= p.id %>" class="link-dark text-decoration-none">
+                <%= p.productName %>
+              </a>
+            </h5>
+
+            <span class="badge bg-secondary mb-1"><%= p.category %></span>
+
+            <p class="text-muted small mb-1">Stock: <%= p.quantity %></p>
+            <p class="fw-bold h5">$<%= p.price.toFixed(2) %></p>
+
+            <!-- Add to Cart Form -->
+            <form action="/add-to-cart/<%= p.id %>" method="POST" class="mt-auto">
+
+              <div class="d-flex align-items-center mb-2">
+                <label class="text-muted small me-2 mb-0">Qty</label>
+
+                <select 
+                  class="form-select form-select-sm me-2"
+                  onchange="this.parentNode.querySelector('input').value = this.value;"
+                >
+                  <% for (let q = 1; q <= 5; q++) { %>
+                    <option value="<%= q %>"><%= q %></option>
+                  <% } %>
+                </select>
+
+                <input type="hidden" name="quantity" value="1">
+              </div>
+
+              <button type="submit" class="btn btn-primary w-100">
+                Add to Cart
+              </button>
+
+            </form>
+          </div>
         </div>
-      <% }) %>
-    </div>
+      </div>
+    <% }) %>
 
   </div>
 
+</div>
+
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>

@@ -161,6 +161,12 @@ app.get("/logout", (req, res) => {
     res.redirect("/");
 });
 
+// Helper to safely expose the logged-in user (or null) to views
+const attachUser = (req, res, next) => {
+    res.locals.user = req.session?.user || null;
+    next();
+};
+
 // INVENTORY (admin only)
 app.get("/inventory", checkAuthenticated, checkAdmin, (req, res) => {
     connection.query("SELECT * FROM products", (err, results) => {
@@ -169,25 +175,44 @@ app.get("/inventory", checkAuthenticated, checkAdmin, (req, res) => {
     });
 });
 
-// SHOPPING PAGE
-app.get("/shopping", checkAuthenticated, (req, res) => {
-    connection.query("SELECT * FROM products", (err, results) => {
+// SHOPPING PAGE (supports optional search and category filters)
+app.get("/shopping", attachUser, (req, res) => {
+    const { search = "", category = "All" } = req.query;
+
+    // Build SQL with optional filters
+    let sql = "SELECT * FROM products";
+    const params = [];
+    if (category && category !== "All") {
+        sql += " WHERE category = ?";
+        params.push(category);
+    }
+    if (search) {
+        sql += params.length ? " AND" : " WHERE";
+        sql += " productName LIKE ?";
+        params.push(`%${search}%`);
+    }
+
+    connection.query(sql, params, (err, results) => {
         if (err) throw err;
-        res.render("shopping", { products: results, user: req.session.user });
+
+        // Allow guests to browse; user stays null until login
+        const user = res.locals.user || { username: "Guest", role: "guest" };
+
+        res.render("shopping", { products: results, user, search, category });
     });
 });
 
-// ADD PRODUCT PAGE
-app.get("/addProduct", checkAuthenticated, checkAdmin, (req, res) => {
+// ADMIN: Add product page
+app.get("/products/admin/add", checkAuthenticated, checkAdmin, (req, res) => {
     res.render("addProduct", { user: req.session.user });
 });
 
-// ADD PRODUCT SUBMIT
-app.post("/addProduct", upload.single("image"), (req, res) => {
+// ADMIN: Handle product creation (stores image via multer)
+app.post("/products/admin/add", checkAuthenticated, checkAdmin, upload.single("image"), (req, res) => {
     const { name, quantity, price, category } = req.body;
     const image = req.file ? req.file.filename : null;
 
-    const sql = 'INSERT INTO products (productName, quantity, price, image, category) VALUES (?, ?, ?, ?, ?)';
+    const sql = "INSERT INTO products (productName, quantity, price, image, category) VALUES (?, ?, ?, ?, ?)";
     connection.query(sql, [name, quantity, price, image, category], err => {
         if (err) throw err;
         res.redirect("/inventory");
@@ -195,27 +220,33 @@ app.post("/addProduct", upload.single("image"), (req, res) => {
 });
 
 // UPDATE PRODUCT PAGE
-app.get("/updateProduct/:id", checkAuthenticated, checkAdmin, (req, res) => {
+app.get("/products/admin/edit/:id", checkAuthenticated, checkAdmin, (req, res) => {
     connection.query("SELECT * FROM products WHERE id = ?", [req.params.id], (err, results) => {
         if (err) throw err;
-        res.render("updateProduct", { product: results[0] });
+        res.render("updateProduct", { product: results[0], user: req.session.user });
     });
 });
 
 // UPDATE PRODUCT SUBMIT
-app.post("/updateProduct/:id", upload.single("image"), (req, res) => {
-    const { name, quantity, price } = req.body;
-    const newImage = req.file ? req.file.filename : req.body.currentImage;
+app.post("/products/admin/edit/:id", checkAuthenticated, checkAdmin, upload.single("image"), (req, res) => {
+    const productId = req.params.id;
+    const { name, quantity, price, category } = req.body;
+    let image = req.body.currentImage;
 
-    const sql = 'UPDATE products SET productName = ?, quantity = ?, price = ?, image = ?, category = ? WHERE id = ?';
-    connection.query(sql, [name, quantity, price, image, category, productId, req.params.id], err => {
-        if (err) throw err;
-        res.redirect("/inventory");
-    });
+    if (req.file) image = req.file.filename;
+
+    connection.query(
+        "UPDATE products SET productName=?, quantity=?, price=?, image=?, category=? WHERE id=?",
+        [name, quantity, price, image, category, productId],
+        err => {
+            if (err) throw err;
+            res.redirect("/inventory");
+        }
+    );
 });
 
-// DELETE PRODUCT
-app.get("/deleteProduct/:id", checkAuthenticated, checkAdmin, (req, res) => {
+// ADMIN: Delete product
+app.get("/products/admin/delete/:id", checkAuthenticated, checkAdmin, (req, res) => {
     connection.query("DELETE FROM products WHERE id = ?", [req.params.id], err => {
         if (err) throw err;
         res.redirect("/inventory");

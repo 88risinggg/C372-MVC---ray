@@ -2,116 +2,136 @@
 
 const express = require("express");
 const router = express.Router();
-const db = require("../db");
+const Product = require("../models/Product");
 const multer = require("multer");
 const path = require("path");
 
 // =========================
-// IMAGE UPLOAD SETTINGS
+// IMAGE UPLOAD
 // =========================
 const storage = multer.diskStorage({
-    destination: function (req, file, cb) {
-        cb(null, "public/images/");
-    },
-    filename: function (req, file, cb) {
-        cb(null, Date.now() + path.extname(file.originalname));
+    destination: (req, file, cb) => cb(null, "public/images/"),
+    filename: (req, file, cb) => cb(null, Date.now() + path.extname(file.originalname))
+});
+const upload = multer({ storage });
+
+// =========================
+// *** IMPORTANT ***
+// Protect admin routes
+// =========================
+function isAdmin(req, res, next) {
+    if (!req.session.user || req.session.user.role !== "admin") {
+        return res.redirect("/login");
     }
-});
-const upload = multer({ storage: storage });
+    next();
+}
+
 
 // =========================
-// LIST PRODUCTS (SHOP)
+// LIST PRODUCTS + SEARCH + CATEGORY
 // =========================
-router.get("/", (req, res) => {
-    db.query("SELECT * FROM products", (err, products) => {
-        if (err) throw err;
+router.get("/", async (req, res) => {
+    const category = req.query.category;
+    const search = req.query.search;
 
-        res.render("shopping", {
-            user: req.session.user,
-            products
-        });
+    let products;
+
+    if (search) {
+        products = await Product.search(search);
+    } else if (category && category !== "All") {
+        products = await Product.getByCategory(category);
+    } else {
+        products = await Product.getAll();
+    }
+
+    res.render("shopping", {
+        user: req.session.user,
+        products,
+        category,
+        search
     });
 });
 
-// =========================
-// VIEW ONE PRODUCT
-// =========================
-router.get("/:id", (req, res) => {
-    db.query("SELECT * FROM products WHERE id = ?", [req.params.id], (err, rows) => {
-        if (err) throw err;
 
-        res.render("product", {
-            user: req.session.user,
-            product: rows[0]
-        });
+// =========================
+// ADD PRODUCT PAGE  (ADMIN)
+// =========================
+router.get("/admin/add", isAdmin, (req, res) => {
+    res.render("addProduct", {
+        user: req.session.user
     });
 });
 
-// =========================
-// ADD PRODUCT PAGE (ADMIN)
-// =========================
-router.get("/admin/add", (req, res) => {
-    res.render("addProduct", { user: req.session.user });
-});
 
 // =========================
 // ADD PRODUCT (ADMIN)
 // =========================
-router.post("/admin/add", upload.single("image"), (req, res) => {
-    const { name, quantity, price } = req.body;
+router.post("/admin/add", isAdmin, upload.single("image"), async (req, res) => {
+    const { name, quantity, price, category } = req.body;
     const image = req.file ? req.file.filename : null;
 
-    db.query(
-        "INSERT INTO products (productName, quantity, price, image) VALUES (?, ?, ?, ?)",
-        [name, quantity, price, image],
-        (err) => {
-            if (err) throw err;
-            res.redirect("/products");
-        }
-    );
+    await Product.create(name, quantity, price, image, category);
+
+    res.redirect("/products");
 });
+
 
 // =========================
 // EDIT PRODUCT PAGE (ADMIN)
 // =========================
-router.get("/admin/edit/:id", (req, res) => {
-    db.query("SELECT * FROM products WHERE id = ?", [req.params.id], (err, rows) => {
-        if (err) throw err;
+router.get("/admin/edit/:id", isAdmin, async (req, res) => {
+    const product = await Product.getById(req.params.id);
 
-        res.render("updateProduct", {
-            user: req.session.user,
-            product: rows[0]
-        });
+    res.render("updateProduct", {
+        user: req.session.user,
+        product
     });
 });
 
-// =========================
-// EDIT PRODUCT (ADMIN)
-// =========================
-router.post("/admin/edit/:id", upload.single("image"), (req, res) => {
-    const { name, quantity, price, currentImage } = req.body;
 
-    // Use new image if uploaded
-    const image = req.file ? req.file.filename : currentImage;
+// =========================
+// EDIT PRODUCT SUBMIT (ADMIN)
+// =========================
+router.post("/admin/edit/:id", isAdmin, upload.single("image"), async (req, res) => {
+    const { name, quantity, price, currentImage, category } = req.body;
+    const newImage = req.file ? req.file.filename : currentImage;
 
-    db.query(
-        "UPDATE products SET productName=?, quantity=?, price=?, image=? WHERE id=?",
-        [name, quantity, price, image, req.params.id],
-        (err) => {
-            if (err) throw err;
-            res.redirect("/products");
-        }
+    await Product.update(
+        req.params.id,
+        name,
+        quantity,
+        price,
+        newImage,
+        category
     );
+
+    res.redirect("/products");
 });
+
 
 // =========================
 // DELETE PRODUCT (ADMIN)
 // =========================
-router.get("/admin/delete/:id", (req, res) => {
-    db.query("DELETE FROM products WHERE id = ?", [req.params.id], (err) => {
-        if (err) throw err;
-        res.redirect("/products");
+router.get("/admin/delete/:id", isAdmin, async (req, res) => {
+    await Product.delete(req.params.id);
+    res.redirect("/products");
+});
+
+
+// =========================
+// VIEW PRODUCT DETAILS
+// (must be LAST to avoid route conflicts)
+// =========================
+router.get("/:id", async (req, res) => {
+    const product = await Product.getById(req.params.id);
+
+    if (!product) return res.status(404).send("Product not found");
+
+    res.render("product", {
+        user: req.session.user,
+        product
     });
 });
+
 
 module.exports = router;

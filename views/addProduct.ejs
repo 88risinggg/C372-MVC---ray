@@ -13,78 +13,98 @@
   <title>Add Product</title>
 </head>
 
-<body>
+<body class="page">
 
-  <!-- Navbar -->
-  <nav class="navbar navbar-expand-sm bg-dark navbar-dark">
-    <div class="container-fluid">
-      <a class="navbar-brand" href="/products">Supermarket App</a>
+<!-- Navbar -->
+<nav class="navbar navbar-expand-sm bg-dark navbar-dark shadow-sm">
+  <div class="container-fluid">
+    <a class="navbar-brand fw-bold" href="/">Supermarket App</a>
 
-      <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#collapsibleNavbar">
-        <span class="navbar-toggler-icon"></span>
-      </button>
+    <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#collapsibleNavbar">
+      <span class="navbar-toggler-icon"></span>
+    </button>
 
-      <div class="collapse navbar-collapse" id="collapsibleNavbar">
-        <ul class="navbar-nav ms-auto">
+    <div class="collapse navbar-collapse" id="collapsibleNavbar">
+      <ul class="navbar-nav ms-auto">
 
-          <li class="nav-item">
-            <a class="nav-link" href="/products">Inventory</a>
-          </li>
+        <li class="nav-item">
+          <a class="nav-link" href="/inventory">Inventory</a>
+        </li>
 
-          <li class="nav-item">
-            <a class="nav-link" href="/products/admin/add">Add Product</a>
-          </li>
+        <li class="nav-item">
+          <a class="nav-link active" href="/products/admin/add">Add Product</a>
+        </li>
 
-          <li class="nav-item">
-            <a class="nav-link" href="/logout">Logout</a>
-          </li>
+        <li class="nav-item">
+          <a class="nav-link" href="/logout">Logout</a>
+        </li>
 
-        </ul>
-      </div>
+      </ul>
     </div>
-  </nav>
-
-  <!-- Main Content -->
-  <div class="container mt-4">
-    <h2 class="text-center mb-4">Add New Product</h2>
-
-    <form action="/products/admin/add" method="POST" enctype="multipart/form-data" class="mx-auto form-box" style="max-width: 500px;">
-
-      <div class="mb-3">
-        <label for="productName" class="form-label">Product Name</label>
-        <input type="text" class="form-control" id="productName" name="productName" required>
-      </div>
-
-      <div class="mb-3">
-        <label for="quantity" class="form-label">Quantity</label>
-        <input type="number" class="form-control" id="quantity" name="quantity" min="0" required>
-      </div>
-
-      <div class="mb-3">
-        <label for="price" class="form-label">Price ($)</label>
-        <input type="number" class="form-control" id="price" name="price" min="0" step="0.01" required>
-      </div>
-
-      <div class="mb-3">
-      <label for="category" class="form-label">Category</label>
-        <select class="form-select" id="category" name="category" required>
-            <option value="Fruits">Fruits</option>
-            <option value="Snacks">Snacks</option>
-            <option value="Drinks">Drinks</option>
-            <option value="Household">Household</option>
-            <option value="Others">Others</option>
-        </select>
-    </div>
-
-      <div class="mb-4">
-        <label for="image" class="form-label">Product Image</label>
-        <input class="form-control" type="file" id="image" name="image" accept="image/*" required>
-      </div>
-
-      <button type="submit" class="btn btn-primary w-100">Add Product</button>
-
-    </form>
   </div>
+</nav>
 
+<!-- Main Content -->
+<div class="container mt-4">
+
+  <h2 class="text-center mb-4">Add New Product</h2>
+
+  <form action="/products/admin/add"
+        method="POST"
+        enctype="multipart/form-data"
+        class="mx-auto form-box glass"
+        style="max-width: 520px;">
+
+    <!-- Name -->
+    <div class="mb-3">
+      <label for="name" class="form-label fw-semibold">Product Name</label>
+      <input type="text" class="form-control" id="name" name="name" required>
+    </div>
+
+    <!-- Quantity -->
+    <div class="mb-3">
+      <label for="quantity" class="form-label fw-semibold">Quantity</label>
+      <input type="number" class="form-control" id="quantity" name="quantity" min="0" required>
+    </div>
+
+    <!-- Price -->
+    <div class="mb-3">
+      <label for="price" class="form-label fw-semibold">Price ($)</label>
+      <input type="number" class="form-control" id="price" name="price" min="0" step="0.01" required>
+    </div>
+
+    <!-- Category -->
+    <div class="mb-3">
+      <label class="form-label fw-semibold">Category</label>
+      <select class="form-select" name="category" required>
+        <option value="Fresh Produce">Fresh Produce</option>
+        <option value="Dairy & Eggs">Dairy & Eggs</option>
+        <option value="Meat & Seafood">Meat & Seafood</option>
+        <option value="Bakery">Bakery</option>
+        <option value="Beverages">Beverages</option>
+        <option value="Snacks">Snacks</option>
+        <option value="Frozen">Frozen</option>
+        <option value="Household Essentials">Household Essentials</option>
+        <option value="Baby & Kids">Baby & Kids</option>
+        <option value="Other">Other</option>
+      </select>
+    </div>
+
+    <!-- Image -->
+    <div class="mb-4">
+      <label for="image" class="form-label fw-semibold">Product Image</label>
+      <input class="form-control" type="file" id="image" name="image" accept="image/*" required>
+    </div>
+
+    <!-- Submit -->
+    <button type="submit" class="btn btn-primary w-100">
+      Add Product
+    </button>
+
+  </form>
+
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>
