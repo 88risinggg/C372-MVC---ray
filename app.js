@@ -157,8 +157,15 @@ app.post("/login", (req, res) => {
 
 // LOGOUT
 app.get("/logout", (req, res) => {
-    req.session.destroy();
-    res.redirect("/");
+    req.session.destroy(err => {
+        if (err) {
+            console.error("Logout error:", err);
+            req.flash("error", "Could not log you out. Please try again.");
+            return res.redirect("/shopping");
+        }
+        res.clearCookie("connect.sid");
+        res.redirect("/login");
+    });
 });
 
 // Helper to safely expose the logged-in user (or null) to views
