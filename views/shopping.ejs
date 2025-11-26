@@ -118,12 +118,15 @@
         <div class="card product-card h-100 shadow-sm">
 
           <!-- Image -->
-          <div class="ratio ratio-4x3">
+          <div class="ratio ratio-4x3 position-relative">
             <img 
               src="/images/<%= p.image %>"
               class="object-fit-cover rounded-top"
               alt="<%= p.productName %>"
             >
+            <% if (p.quantity <= 0) { %>
+              <span class="badge bg-danger position-absolute top-0 end-0 m-2">Out of Stock</span>
+            <% } %>
           </div>
 
           <div class="card-body d-flex flex-column">
@@ -138,27 +141,33 @@
             <p class="text-muted small mb-1">Stock: <%= p.quantity %></p>
             <p class="fw-bold h5">$<%= p.price.toFixed(2) %></p>
 
-            <!-- ALWAYS Add-to-Cart (no login checks) -->
-            <form action="/add-to-cart/<%= p.id %>" method="POST" class="mt-auto">
-              <div class="d-flex align-items-center mb-2">
-                <label class="text-muted small me-2 mb-0">Qty</label>
+            <% if (p.quantity > 0) { %>
+              <!-- Add-to-Cart (only if stock) -->
+              <form action="/add-to-cart/<%= p.id %>" method="POST" class="mt-auto">
+                <div class="d-flex align-items-center mb-2">
+                  <label class="text-muted small me-2 mb-0">Qty</label>
 
-                <select 
-                  class="form-select form-select-sm me-2"
-                  onchange="this.parentNode.querySelector('input').value = this.value;"
-                >
-                  <% for (let q = 1; q <= 5; q++) { %>
-                    <option value="<%= q %>"><%= q %></option>
-                  <% } %>
-                </select>
+                  <select 
+                    class="form-select form-select-sm me-2"
+                    onchange="this.parentNode.querySelector('input').value = this.value;"
+                  >
+                    <% for (let q = 1; q <= Math.min(5, p.quantity); q++) { %>
+                      <option value="<%= q %>"><%= q %></option>
+                    <% } %>
+                  </select>
 
-                <input type="hidden" name="quantity" value="1">
+                  <input type="hidden" name="quantity" value="1">
+                </div>
+
+                <button type="submit" class="btn btn-primary w-100">
+                  Add to Cart
+                </button>
+              </form>
+            <% } else { %>
+              <div class="mt-auto">
+                <button class="btn btn-secondary w-100" disabled>Out of Stock</button>
               </div>
-
-              <button type="submit" class="btn btn-primary w-100">
-                Add to Cart
-              </button>
-            </form>
+            <% } %>
 
           </div>
         </div>
