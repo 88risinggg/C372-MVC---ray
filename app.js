@@ -227,7 +227,8 @@ app.get("/shopping", attachUser, (req, res) => {
 
 // ADMIN: Add product page
 app.get("/products/admin/add", checkAuthenticated, checkAdmin, (req, res) => {
-    res.render("addProduct", { user: req.session.user });
+    const success = req.flash("success");
+    res.render("addProduct", { user: req.session.user, success });
 });
 
 // ADMIN: Handle product creation (stores image via multer)
@@ -238,7 +239,8 @@ app.post("/products/admin/add", checkAuthenticated, checkAdmin, upload.single("i
     const sql = "INSERT INTO products (productName, quantity, price, image, category) VALUES (?, ?, ?, ?, ?)";
     connection.query(sql, [name, quantity, price, image, category], err => {
         if (err) throw err;
-        res.redirect("/inventory");
+        req.flash("success", "Product added successfully!");
+        res.redirect("/products/admin/add");
     });
 });
 
