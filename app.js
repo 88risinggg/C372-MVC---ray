@@ -177,6 +177,7 @@ const attachUser = (req, res, next) => {
 // INVENTORY (admin only)
 app.get("/inventory", checkAuthenticated, checkAdmin, (req, res) => {
     const search = req.query.search;
+    const success = req.flash("success");
 
     let sql = "SELECT * FROM products";
     let params = [];
@@ -192,7 +193,8 @@ app.get("/inventory", checkAuthenticated, checkAdmin, (req, res) => {
         res.render("inventory", {
             products: results,
             user: req.session.user,
-            search
+            search,
+            success
         });
     });
 });
@@ -240,7 +242,7 @@ app.post("/products/admin/add", checkAuthenticated, checkAdmin, upload.single("i
     connection.query(sql, [name, quantity, price, image, category], err => {
         if (err) throw err;
         req.flash("success", "Product added successfully!");
-        res.redirect("/products/admin/add");
+        res.redirect("/inventory");
     });
 });
 
@@ -265,6 +267,7 @@ app.post("/products/admin/edit/:id", checkAuthenticated, checkAdmin, upload.sing
         [name, quantity, price, image, category, productId],
         err => {
             if (err) throw err;
+            req.flash("success", "Product updated successfully!");
             res.redirect("/inventory");
         }
     );
@@ -341,10 +344,15 @@ app.post("/admin/orders/:id/status", checkAuthenticated, checkAdmin, (req, res) 
 
 // ADMIN: Delete product
 app.get("/products/admin/delete/:id", checkAuthenticated, checkAdmin, (req, res) => {
-    connection.query("DELETE FROM products WHERE id = ?", [req.params.id], err => {
-        if (err) throw err;
-        res.redirect("/inventory");
-    });
+    connection.query(
+        "DELETE FROM products WHERE id = ?",
+        [req.params.id],
+        err => {
+            if (err) throw err;
+            req.flash("success", "Product deleted successfully!");
+            res.redirect("/inventory");
+        }
+    );
 });
 
 // PRODUCT DETAILS

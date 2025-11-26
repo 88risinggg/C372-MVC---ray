@@ -11,6 +11,18 @@
   <link rel="stylesheet" href="/css/style.css">
 
   <title>Add Product</title>
+
+  <!-- SweetAlert2 -->
+  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+  <style>
+    .hero-title { animation: fadeInDown 0.9s ease; }
+    .hero-subtitle { animation: fadeIn 1.4s ease; }
+    @keyframes fadeInDown {
+      from { opacity: 0; transform: translateY(-25px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+  </style>
 </head>
 
 <body class="page">
@@ -106,5 +118,18 @@
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+
+<script>
+  // Display success message if available
+  if (success && success.length > 0) { 
+    Swal.fire({
+      icon: "success",
+      title: "Product Added Successfully!",
+      text: "<%= success[0] %>", // first flash message
+      confirmButtonColor: "#3085d6"
+    })};
+</script>
+
 </body>
 </html>
+

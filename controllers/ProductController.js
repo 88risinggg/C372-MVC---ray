@@ -57,8 +57,13 @@ router.get("/", async (req, res) => {
 // ADD PRODUCT PAGE  (ADMIN)
 // =========================
 router.get("/admin/add", isAdmin, (req, res) => {
+
+    // 🔥 Pass success message to EJS
+    const successMsg = req.flash("success");
+
     res.render("addProduct", {
-        user: req.session.user
+        user: req.session.user,
+        success: successMsg
     });
 });
 
@@ -67,12 +72,17 @@ router.get("/admin/add", isAdmin, (req, res) => {
 // ADD PRODUCT (ADMIN)
 // =========================
 router.post("/admin/add", isAdmin, upload.single("image"), async (req, res) => {
+
     const { name, quantity, price, category } = req.body;
     const image = req.file ? req.file.filename : null;
 
     await Product.create(name, quantity, price, image, category);
 
-    res.redirect("/products");
+    // 🔥 Set success flash message
+    req.flash("success", "Product added successfully!");
+
+    // Redirect back to add page (or change to /products if preferred)
+    res.redirect("/products/admin/add");
 });
 
 
@@ -120,7 +130,6 @@ router.get("/admin/delete/:id", isAdmin, async (req, res) => {
 
 // =========================
 // VIEW PRODUCT DETAILS
-// (must be LAST to avoid route conflicts)
 // =========================
 router.get("/:id", async (req, res) => {
     const product = await Product.getById(req.params.id);
@@ -135,3 +144,4 @@ router.get("/:id", async (req, res) => {
 
 
 module.exports = router;
+
