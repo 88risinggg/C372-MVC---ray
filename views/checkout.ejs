@@ -48,74 +48,112 @@
   <div class="container py-4">
     <div class="row g-4">
 
-      <!-- Payment Selection -->
-      <div class="col-lg-7">
-        <div class="card glass">
-          <div class="card-body">
-
-            <h2 class="h4 mb-3">Select Payment Method</h2>
-
-            <form method="POST" action="/checkout" class="row g-3">
-
-              <div class="form-check">
-                <input class="form-check-input" type="radio" name="paymentMethod" value="Credit Card" checked>
-                <label class="form-check-label">Credit Card (Simulated)</label>
-              </div>
-
-              <div class="form-check">
-                <input class="form-check-input" type="radio" name="paymentMethod" value="PayNow">
-                <label class="form-check-label">PayNow</label>
-              </div>
-
-              <div class="form-check">
-                <input class="form-check-input" type="radio" name="paymentMethod" value="GrabPay">
-                <label class="form-check-label">GrabPay</label>
-              </div>
-
-              <div class="form-check">
-                <input class="form-check-input" type="radio" name="paymentMethod" value="Cash on Delivery">
-                <label class="form-check-label">Cash on Delivery</label>
-              </div>
-
-              <div class="col-12 mt-3">
-                <button type="submit" class="btn btn-success w-100">
-                  Confirm Payment & Place Order
-                </button>
-              </div>
-            </form>
-
-          </div>
-        </div>
-      </div>
-
       <!-- Order Summary -->
       <div class="col-lg-5">
-        <div class="card glass">
+        <div class="card glass h-100 shadow-sm">
           <div class="card-body">
-
-            <h3 class="h5 mb-3">Order Summary</h3>
+            <div class="d-flex justify-content-between align-items-center mb-2">
+              <h3 class="h5 mb-0">Order Summary</h3>
+              <a href="/cart" class="btn btn-link btn-sm">Back to Cart</a>
+            </div>
+            <hr>
 
             <% let total = 0; %>
-
             <ul class="list-group list-group-flush mb-3">
               <% items.forEach(item => { %>
-                <li class="list-group-item d-flex justify-content-between align-items-center">
-                  <div>
+                <li class="list-group-item d-flex gap-3 align-items-center">
+                  <% if (item.image) { %>
+                    <img src="/images/<%= item.image %>" class="rounded shadow-sm" style="width: 60px; height: 60px; object-fit: cover;">
+                  <% } %>
+                  <div class="flex-grow-1">
                     <div class="fw-semibold"><%= item.productName %></div>
                     <small class="text-muted">Qty <%= item.quantity %></small>
                   </div>
-                  <div>$<%= (item.price * item.quantity).toFixed(2) %></div>
+                  <div class="fw-semibold">$<%= (item.price * item.quantity).toFixed(2) %></div>
                 </li>
                 <% total += item.price * item.quantity; %>
               <% }) %>
             </ul>
 
+            <div class="d-flex justify-content-between align-items-center mb-2">
+              <span class="text-muted">Subtotal</span>
+              <span class="fw-semibold">$<%= total.toFixed(2) %></span>
+            </div>
             <div class="d-flex justify-content-between align-items-center mb-3">
-              <span class="fw-semibold">Total</span>
-              <span class="fw-bold h5 mb-0">$<%= total.toFixed(2) %></span>
+              <span class="text-muted">Shipping</span>
+              <span class="fw-semibold text-success">Free</span>
             </div>
 
-            <a href="/cart" class="btn btn-link ps-0">Back to Cart</a>
+            <div class="d-flex justify-content-between align-items-center">
+              <span class="fw-bold h5 mb-0">Total</span>
+              <span class="fw-bold h4 mb-0">$<%= total.toFixed(2) %></span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Payment Selection -->
+      <div class="col-lg-7">
+        <div class="card glass h-100 shadow-sm">
+          <div class="card-body">
+            <h2 class="h4 mb-3">Payment</h2>
+            <p class="text-muted small mb-3">Choose a payment method and place your order.</p>
+
+            <form method="POST" action="/checkout" class="row g-3">
+              <div class="col-12">
+                <div class="card border-0 shadow-sm">
+                  <div class="card-body">
+                    <div class="form-check">
+                      <input class="form-check-input" type="radio" name="paymentMethod" value="Credit Card" id="pm-card" checked>
+                      <label class="form-check-label fw-semibold" for="pm-card">Credit Card</label>
+                      <p class="small text-muted mb-0">Visa / Master / Amex</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div class="col-12">
+                <div class="card border-0 shadow-sm">
+                  <div class="card-body">
+                    <div class="form-check">
+                      <input class="form-check-input" type="radio" name="paymentMethod" value="PayNow" id="pm-paynow">
+                      <label class="form-check-label fw-semibold" for="pm-paynow">PayNow</label>
+                      <p class="small text-muted mb-0">Instant bank transfer</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div class="col-12">
+                <div class="card border-0 shadow-sm">
+                  <div class="card-body">
+                    <div class="form-check">
+                      <input class="form-check-input" type="radio" name="paymentMethod" value="GrabPay" id="pm-grabpay">
+                      <label class="form-check-label fw-semibold" for="pm-grabpay">GrabPay</label>
+                      <p class="small text-muted mb-0">Pay with Grab wallet</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div class="col-12">
+                <div class="card border-0 shadow-sm">
+                  <div class="card-body">
+                    <div class="form-check">
+                      <input class="form-check-input" type="radio" name="paymentMethod" value="Cash on Delivery" id="pm-cod">
+                      <label class="form-check-label fw-semibold" for="pm-cod">Cash on Delivery</label>
+                      <p class="small text-muted mb-0">Pay when you receive the order</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div class="col-12">
+                <button type="submit" class="btn btn-success w-100 py-2">
+                  Confirm Payment & Place Order
+                </button>
+              </div>
+            </form>
 
           </div>
         </div>

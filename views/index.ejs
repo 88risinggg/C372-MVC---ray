@@ -86,7 +86,13 @@
           <div class="card-body d-flex flex-column">
             <h6 class="fw-semibold"><%= p.productName %></h6>
             <p class="small text-muted mb-1">Category: <%= p.category %></p>
-            <p class="fw-bold">$<%= p.price.toFixed(2) %></p>
+            <% const hasDiscount = p.discount && p.discount > 0; %>
+            <% const finalPrice = hasDiscount ? p.price * (1 - p.discount / 100) : p.price; %>
+            <p class="fw-bold mb-1">$<%= finalPrice.toFixed(2) %></p>
+            <% if (hasDiscount) { %>
+              <p class="text-muted small mb-2 text-decoration-line-through">$<%= p.price.toFixed(2) %></p>
+              <span class="badge bg-danger">-<%= p.discount %>%</span>
+            <% } %>
 
             <!-- ADD TO CART BUTTON -->
             <% if (!user) { %>

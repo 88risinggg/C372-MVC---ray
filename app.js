@@ -190,11 +190,14 @@ app.get("/inventory", checkAuthenticated, checkAdmin, (req, res) => {
     connection.query(sql, params, (err, results) => {
         if (err) throw err;
 
+        const outOfStock = results.filter(p => p.quantity <= 0);
+
         res.render("inventory", {
             products: results,
             user: req.session.user,
             search,
-            success
+            success,
+            outOfStock
         });
     });
 });
@@ -235,11 +238,11 @@ app.get("/products/admin/add", checkAuthenticated, checkAdmin, (req, res) => {
 
 // ADMIN: Handle product creation (stores image via multer)
 app.post("/products/admin/add", checkAuthenticated, checkAdmin, upload.single("image"), (req, res) => {
-    const { name, quantity, price, category } = req.body;
+    const { name, quantity, price, category, discount = 0 } = req.body;
     const image = req.file ? req.file.filename : null;
 
-    const sql = "INSERT INTO products (productName, quantity, price, image, category) VALUES (?, ?, ?, ?, ?)";
-    connection.query(sql, [name, quantity, price, image, category], err => {
+    const sql = "INSERT INTO products (productName, quantity, price, image, category, discount) VALUES (?, ?, ?, ?, ?, ?)";
+    connection.query(sql, [name, quantity, price, image, category, discount], err => {
         if (err) throw err;
         req.flash("success", "Product added successfully!");
         res.redirect("/inventory");
@@ -257,14 +260,14 @@ app.get("/products/admin/edit/:id", checkAuthenticated, checkAdmin, (req, res) =
 // UPDATE PRODUCT SUBMIT
 app.post("/products/admin/edit/:id", checkAuthenticated, checkAdmin, upload.single("image"), (req, res) => {
     const productId = req.params.id;
-    const { name, quantity, price, category } = req.body;
+    const { name, quantity, price, category, discount = 0 } = req.body;
     let image = req.body.currentImage;
 
     if (req.file) image = req.file.filename;
 
     connection.query(
-        "UPDATE products SET productName=?, quantity=?, price=?, image=?, category=? WHERE id=?",
-        [name, quantity, price, image, category, productId],
+        "UPDATE products SET productName=?, quantity=?, price=?, image=?, category=?, discount=? WHERE id=?",
+        [name, quantity, price, image, category, discount, productId],
         err => {
             if (err) throw err;
             req.flash("success", "Product updated successfully!");
@@ -380,16 +383,21 @@ app.post("/add-to-cart/:id", checkAuthenticated, (req, res) => {
 
         if (!req.session.cart) req.session.cart = [];
 
+        const productRow = results[0];
+        const basePrice = parseFloat(productRow.price) || 0;
+        const discount = parseFloat(productRow.discount) || 0;
+        const discountedPrice = Math.max(0, basePrice * (1 - discount / 100));
+
         const existing = req.session.cart.find(i => i.id === productId);
         if (existing) {
             existing.quantity += quantity;
         } else {
             req.session.cart.push({
-                id: results[0].id,
-                productName: results[0].productName,
-                price: results[0].price,
+                id: productRow.id,
+                productName: productRow.productName,
+                price: discountedPrice,
                 quantity,
-                image: results[0].image
+                image: productRow.image
             });
         }
 

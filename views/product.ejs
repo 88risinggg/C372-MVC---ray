@@ -67,12 +67,25 @@
                     <img src="/images/<%= product.image %>"
                          class="rounded shadow-sm"
                          width="60%">
+                    <% if (product.quantity <= 0) { %>
+                        <div class="mt-2">
+                            <span class="badge bg-danger">Out of Stock</span>
+                        </div>
+                    <% } %>
                 </div>
 
                 <!-- Details -->
                 <p><b>Name:</b><br> <%= product.productName %></p>
                 <p><b>Quantity:</b><br> <%= product.quantity %></p>
-                <p><b>Price:</b><br> $<%= product.price.toFixed(2) %></p>
+                <% const hasDiscount = product.discount && product.discount > 0; %>
+                <% const finalPrice = hasDiscount ? product.price * (1 - product.discount / 100) : product.price; %>
+                <p><b>Price:</b><br>
+                  <span class="fw-semibold">$<%= finalPrice.toFixed(2) %></span>
+                  <% if (hasDiscount) { %>
+                    <span class="text-muted text-decoration-line-through ms-2">$<%= product.price.toFixed(2) %></span>
+                    <span class="badge bg-danger ms-1">-<%= product.discount %>%</span>
+                  <% } %>
+                </p>
 
             </div>
 

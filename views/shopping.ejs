@@ -139,7 +139,13 @@
             <span class="badge bg-secondary mb-1"><%= p.category %></span>
 
             <p class="text-muted small mb-1">Stock: <%= p.quantity %></p>
-            <p class="fw-bold h5">$<%= p.price.toFixed(2) %></p>
+            <% const hasDiscount = p.discount && p.discount > 0; %>
+            <% const finalPrice = hasDiscount ? p.price * (1 - p.discount / 100) : p.price; %>
+            <p class="fw-bold h5 mb-1">$<%= finalPrice.toFixed(2) %></p>
+            <% if (hasDiscount) { %>
+              <p class="text-muted small mb-2 text-decoration-line-through">$<%= p.price.toFixed(2) %></p>
+              <span class="badge bg-danger mb-2">-<%= p.discount %>%</span>
+            <% } %>
 
             <% if (p.quantity > 0) { %>
               <!-- Add-to-Cart (only if stock) -->
