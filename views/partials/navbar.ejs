@@ -1,0 +1,61 @@
+<%
+  const currentUser = typeof user !== "undefined" ? user : null;
+
+  const resolvedBrandHref = typeof brandHref !== "undefined"
+    ? brandHref
+    : (currentUser?.role === "admin" ? "/" : "/shopping");
+
+  const resolvedBrandLabel = typeof brandLabel !== "undefined"
+    ? brandLabel
+    : "Grow Mart";
+
+  const defaultLinks = (() => {
+    if (!currentUser) {
+      return [
+        { href: "/register", label: "Register" },
+        { href: "/login", label: "Login" }
+      ];
+    }
+
+    if (currentUser.role === "admin") {
+      return [
+        { href: "/inventory", label: "Inventory" },
+        { href: "/admin/orders", label: "Order History" }
+      ];
+    }
+
+    return [
+      { href: "/shopping", label: "Shop" },
+      { href: "/cart", label: "Cart" },
+      { href: "/orders", label: "My Orders" }
+    ];
+  })();
+
+  const providedLinks = (typeof navLinks !== "undefined" && Array.isArray(navLinks)) ? navLinks : null;
+  const links = providedLinks && providedLinks.length ? providedLinks : defaultLinks;
+  const includeLogout = currentUser && !links.some(link => link.href === "/logout");
+%>
+
+<nav class="navbar navbar-expand-sm bg-dark navbar-dark shadow-sm">
+  <div class="container-fluid">
+    <a class="navbar-brand fw-bold" href="<%= resolvedBrandHref %>"><%= resolvedBrandLabel %></a>
+
+    <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#mainNav">
+      <span class="navbar-toggler-icon"></span>
+    </button>
+
+    <div class="collapse navbar-collapse" id="mainNav">
+      <ul class="navbar-nav ms-auto">
+        <% links.forEach(link => { %>
+          <li class="nav-item">
+            <a class="nav-link <%= link.active ? "active" : "" %>" href="<%= link.href %>"><%= link.label %></a>
+          </li>
+        <% }) %>
+
+        <% if (includeLogout) { %>
+          <li class="nav-item"><a class="nav-link" href="/logout">Logout</a></li>
+        <% } %>
+      </ul>
+    </div>
+  </div>
+</nav>

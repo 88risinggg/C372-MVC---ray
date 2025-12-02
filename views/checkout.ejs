@@ -16,33 +16,14 @@
 <body class="page">
 
   <!-- Navbar -->
-  <nav class="navbar navbar-expand-sm bg-dark navbar-dark shadow-sm">
-    <div class="container-fluid">
-      <a class="navbar-brand fw-bold" href="/shopping">Grow Mart</a>
-
-      <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#collapsibleNavbar">
-        <span class="navbar-toggler-icon"></span>
-      </button>
-
-      <div class="collapse navbar-collapse" id="collapsibleNavbar">
-        <ul class="navbar-nav ms-auto">
-
-          <li class="nav-item">
-            <a class="nav-link" href="/shopping">Shop</a>
-          </li>
-
-          <li class="nav-item">
-            <a class="nav-link" href="/orders">My Orders</a>
-          </li>
-
-          <li class="nav-item">
-            <a class="nav-link" href="/logout">Logout</a>
-          </li>
-
-        </ul>
-      </div>
-    </div>
-  </nav>
+  <%- include("partials/navbar", { 
+    user, 
+    brandHref: "/shopping", 
+    navLinks: [
+      { href: "/shopping", label: "Shop" },
+      { href: "/orders", label: "My Orders" }
+    ] 
+  }) %>
 
   <!-- Main Checkout Container -->
   <div class="container py-4">

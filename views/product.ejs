@@ -16,38 +16,19 @@
 <body class="page">
 
     <!-- Navbar -->
-    <nav class="navbar navbar-expand-sm bg-dark navbar-dark">
-        <div class="container-fluid">
-
-            <a class="navbar-brand fw-bold" href="/shopping">Grow Mart</a>
-
-            <button class="navbar-toggler" type="button" data-bs-toggle="collapse"
-                    data-bs-target="#collapsibleNavbar">
-                <span class="navbar-toggler-icon"></span>
-            </button>
-
-            <div class="collapse navbar-collapse" id="collapsibleNavbar">
-                <ul class="navbar-nav ms-auto">
-
-                    <% if (user.role === "admin") { %>
-                        <li class="nav-item">
-                            <a class="nav-link" href="/products">Inventory</a>
-                        </li>
-
-                        <li class="nav-item">
-                            <a class="nav-link" href="/products/admin/add">Add Product</a>
-                        </li>
-                    <% } %>
-
-                    <li class="nav-item">
-                        <a class="nav-link" href="/logout">Logout</a>
-                    </li>
-
-                </ul>
-            </div>
-
-        </div>
-    </nav>
+    <%- include("partials/navbar", { 
+      user, 
+      brandHref: "/shopping", 
+      navLinks: (user && user.role === "admin")
+        ? [
+            { href: "/inventory", label: "Inventory" },
+            { href: "/products/admin/add", label: "Add Product" }
+          ]
+        : [
+            { href: "/shopping", label: "Shop" },
+            { href: "/cart", label: "Cart" }
+          ] 
+    }) %>
 
     <!-- Main Content -->
     <div class="container mt-4">
