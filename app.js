@@ -174,6 +174,16 @@ const attachUser = (req, res, next) => {
     next();
 };
 
+// Helper to calculate totals with GST and delivery
+const calculateTotals = (items = []) => {
+    const subtotal = items.reduce((sum, i) => sum + (i.price || 0) * (i.quantity || 0), 0);
+    const deliveryFee = subtotal > 50 ? 0 : 2;
+    const taxable = subtotal + deliveryFee;
+    const gst = Math.round(taxable * 0.09 * 100) / 100; // 9% GST rounded to cents
+    const total = Math.round((taxable + gst) * 100) / 100;
+    return { subtotal, deliveryFee, gst, total };
+};
+
 // INVENTORY (admin only)
 app.get("/inventory", checkAuthenticated, checkAdmin, (req, res) => {
     const search = req.query.search;
@@ -428,11 +438,14 @@ app.get("/checkout", checkAuthenticated, (req, res) => {
         return res.redirect("/shopping");
     }
 
-    const total = items.reduce((sum, i) => sum + i.price * i.quantity, 0);
+    const totals = calculateTotals(items);
 
     res.render("checkout", {
         items,         // <<< FIXED
-        total,
+        subtotal: totals.subtotal,
+        deliveryFee: totals.deliveryFee,
+        gst: totals.gst,
+        total: totals.total,
         user: req.session.user,
         errors: req.flash("error")
     });
@@ -472,12 +485,12 @@ app.post("/checkout", checkAuthenticated, (req, res) => {
 
     Promise.all(stockChecks)
         .then(() => {
-            // Step 2 — Insert order
-            const total = cart.reduce((sum, i) => sum + i.price * i.quantity, 0);
+            // Step 2 – Insert order
+            const totals = calculateTotals(cart);
 
             connection.query(
                 "INSERT INTO orders (user_id, total) VALUES (?, ?)",
-                [req.session.user.id, total],
+                [req.session.user.id, totals.total],
                 (err, orderResult) => {
                     if (err) throw err;
 
@@ -512,7 +525,7 @@ app.post("/checkout", checkAuthenticated, (req, res) => {
                             req.session.cart = []; // empty cart
                             res.render("paymentSuccess", {
                                 orderId,
-                                total,
+                                total: totals.total,
                                 user: req.session.user
                             });
                         })
