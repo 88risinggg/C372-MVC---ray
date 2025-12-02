@@ -13,7 +13,7 @@
 <body class="page">
 
 <!-- NAVBAR -->
-<%- include("partials/navbar", { 
+<%- include("partial", { 
   user, 
   brandHref: "/shopping", 
   navLinks: [
@@ -62,10 +62,11 @@
 
       <div class="col-md-3">
         <p class="text-muted small mb-1">Order Status</p>
-        <span class="badge 
-          <%= order.orderStatus === 'Completed' ? 'bg-success' : 
-              order.orderStatus === 'Delivering' ? 'bg-info' :
-              'bg-warning' %>">
+        <span class="
+          status-badge
+          <%= order.orderStatus === 'Completed' ? 'status-completed' : 
+              order.orderStatus === 'Delivering' ? 'status-delivering' :
+              'status-preparing' %>">
           <%= order.orderStatus %>
         </span>
       </div>

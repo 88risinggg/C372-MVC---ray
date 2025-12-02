@@ -16,7 +16,7 @@
 <body class="page">
 
 <!-- NAVBAR -->
-<%- include("partials/navbar", { 
+<%- include("partial", { 
   user, 
   brandHref: "/shopping", 
   navLinks: [
@@ -80,10 +80,11 @@
                   <td>$<%= Number(order.total).toFixed(2) %></td>
 
                   <td>
-                    <span class="badge 
-                      <%= order.orderStatus === 'Completed' ? 'bg-success' :
-                          order.orderStatus === 'Delivering' ? 'bg-info' : 
-                          'bg-warning' %>">
+                    <span class="
+                      status-badge
+                      <%= order.orderStatus === 'Completed' ? 'status-completed' :
+                          order.orderStatus === 'Delivering' ? 'status-delivering' : 
+                          'status-preparing' %>">
                       <%= order.orderStatus %>
                     </span>
                   </td>

@@ -1,16 +1,35 @@
-﻿/* -------------------------------------------------
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+
+:root {
+    --bg: #141414;
+    --card: #1f1f1f;
+    --text: #f5f5f5;
+    --muted: #a1a1a1;
+    --border: #2b2b2b;
+    --accent: #ffffff; /* buttons white */
+    --accent-2: #e6e6e6;
+    --radius: 14px;
+    --shadow: 0 12px 38px rgba(0, 0, 0, 0.35);
+    --success: #16a34a;
+    --warning: #f59e0b;
+    --info: #38bdf8;
+    --danger: #f87171;
+}
+
+/* -------------------------------------------------
    GLOBAL THEME
 ---------------------------------------------------*/
 body.page {
-    background: linear-gradient(135deg, #edf7ff, #f3fff6);
+    background: var(--bg);
     min-height: 100vh;
-    font-family: 'Segoe UI', sans-serif;
-    color: #2b2b2b;
+    font-family: 'Inter', 'Segoe UI', sans-serif;
+    color: var(--text);
+    letter-spacing: -0.01em;
+    line-height: 1.6;
 }
 
-/* Soft fade-in for all pages */
 .page * {
-    animation: fadeIn 0.25s ease-out;
+    animation: fadeIn 0.18s ease-out;
 }
 
 @keyframes fadeIn {
@@ -18,185 +37,399 @@ body.page {
     to   { opacity: 1; }
 }
 
+hr {
+    border-color: #2f2f2f;
+    opacity: 0.9;
+}
 
 /* -------------------------------------------------
-   NAVBAR — clean, minimal, modern
+   NAVBAR - minimal black brand
 ---------------------------------------------------*/
 .navbar {
-    padding: 14px 25px;
-    background: rgba(20, 20, 20, 0.8) !important;
-    backdrop-filter: blur(12px);
-    border-bottom: 1px solid rgba(255,255,255,0.08);
+    padding: 14px 22px;
+    background: rgba(20, 20, 20, 0.95) !important;
+    backdrop-filter: blur(10px);
+    border-bottom: 1px solid var(--border);
 }
 
 .navbar-brand {
     font-weight: 700;
-    font-size: 1.35rem;
-    letter-spacing: 0.5px;
-    color: #fff !important;
+    font-size: 1.28rem;
+    letter-spacing: -0.02em;
+    color: var(--accent) !important;
 }
 
 .navbar-nav .nav-link {
     font-size: 0.95rem;
-    padding: 8px 14px;
-    border-radius: 6px;
-    color: #e8e8e8 !important;
-    transition: 0.25s;
+    padding: 8px 13px;
+    border-radius: 10px;
+    color: #eaeaea !important;
+    transition: 0.2s ease;
 }
 
-.nav-link:hover {
-    background: rgba(255,255,255,0.1);
-    transform: translateY(-2px);
+.navbar-nav .nav-link.active,
+.navbar-nav .nav-link:hover {
+    color: #000 !important;
+    background: var(--accent);
+    transform: translateY(-1px);
 }
 
+.navbar-toggler {
+    border-color: var(--border);
+}
+
+.navbar-toggler-icon {
+    filter: invert(1);
+}
 
 /* -------------------------------------------------
-   GLASS EFFECT (cards, containers)
+   SURFACE / CARDS
 ---------------------------------------------------*/
-.glass {
-    background: rgba(255, 255, 255, 0.68);
-    border-radius: 14px;
-    padding: 22px;
-    backdrop-filter: blur(12px);
-    box-shadow: 0 6px 35px rgba(0,0,0,0.12);
-    border: 1px solid rgba(255,255,255,0.45);
+.glass,
+.card {
+    background: #1d1d1d;
+    border-radius: var(--radius);
+    border: 1px solid var(--border);
+    box-shadow: var(--shadow);
+    color: var(--text);
 }
 
+.card {
+    border: 1px solid var(--border);
+}
+
+.glass {
+    padding: 22px;
+}
+
+/* Section spacing */
+.section {
+    margin-bottom: 2.5rem;
+}
+
+.section-heading {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 1rem;
+    margin-bottom: 1rem;
+}
+
+.section-title {
+    font-weight: 700;
+    font-size: 1.5rem;
+    letter-spacing: -0.02em;
+}
+
+.section-subtitle {
+    color: var(--muted);
+}
 
 /* -------------------------------------------------
-   PRODUCT CARDS — cleaner, modern, minimal
+   PRODUCT CARDS
 ---------------------------------------------------*/
 .product-card {
-    transition: 0.25s ease;
-    border-radius: 16px;
-    background: #fff;
+    transition: 0.22s ease;
     overflow: hidden;
-    border: none;
+    border: 1px solid var(--border);
 }
 
 .product-card:hover {
-    transform: translateY(-6px);
-    box-shadow: 0 12px 38px rgba(0,0,0,0.18);
+    transform: translateY(-4px);
+    box-shadow: 0 16px 44px rgba(0, 0, 0, 0.4);
 }
 
 .product-card img {
-    transition: 0.3s ease;
+    transition: 0.25s ease;
 }
 
 .product-card:hover img {
-    transform: scale(1.07);
+    transform: scale(1.04);
 }
 
-/* product title */
 .product-card .card-title {
     font-weight: 600;
-    font-size: 1.1rem;
+    font-size: 1.05rem;
 }
 
+.badge {
+    border-radius: 999px;
+    font-weight: 600;
+    color: #000;
+}
 
 /* -------------------------------------------------
-   BUTTONS — soft, modern, floating effect
+   BUTTONS
 ---------------------------------------------------*/
+.btn {
+    border-radius: 999px;
+    font-weight: 600;
+    letter-spacing: -0.01em;
+}
+
+.btn:focus-visible,
+.form-control:focus-visible,
+.form-select:focus-visible {
+    outline: 2px solid rgba(0,0,0,0.6);
+    outline-offset: 1px;
+}
+
 .btn-primary {
-    background: #1976d2;
-    border: none;
-    transition: 0.3s ease;
+    background: var(--accent);
+    border-color: var(--accent);
+    color: #000;
+    transition: 0.2s ease;
 }
 
 .btn-primary:hover {
-    background: #0d47a1;
-    transform: translateY(-2px);
+    background: var(--accent-2);
+    border-color: var(--accent-2);
+    transform: translateY(-1px);
+    color: #000;
 }
 
 .btn-outline-primary {
-    border-width: 2px;
-    transition: 0.3s ease;
+    border-color: var(--accent);
+    color: var(--accent);
 }
 
 .btn-outline-primary:hover {
-    transform: translateY(-2px);
+    background: var(--accent);
+    color: #000;
 }
 
+.btn-link {
+    color: var(--accent);
+}
+
+.btn-light {
+    background: #2a2a2a;
+    border-color: #2f2f2f;
+    color: var(--text);
+}
+
+.btn-light:hover {
+    background: #343434;
+}
+
+.btn-pill {
+    border-radius: 999px;
+}
 
 /* -------------------------------------------------
-   EMPTY STATE
+   FORMS
 ---------------------------------------------------*/
-.empty-state {
-    padding: 35px;
-    text-align: center;
-    opacity: 0.7;
-    font-size: 1rem;
+.form-control,
+.form-select {
+    border-radius: 10px;
+    border: 1px solid var(--border);
+    padding: 10px 12px;
+    background: #111;
+    color: var(--text);
+    caret-color: var(--text);
 }
 
+.form-control:focus,
+.form-select:focus {
+    border-color: #b5b5b5;
+    box-shadow: 0 0 0 0.15rem rgba(0, 0, 0, 0.08);
+}
+
+.form-box,
+.checkout-box {
+    background: var(--card);
+    padding: 26px;
+    border-radius: var(--radius);
+    box-shadow: var(--shadow);
+}
+
+label,
+.form-label {
+    font-weight: 600;
+    color: var(--text);
+}
+
+.text-muted {
+    color: #eaeaea !important;
+}
 
 /* -------------------------------------------------
-   TABLE STYLING — smoother & minimal
+   TABLES
 ---------------------------------------------------*/
 .table thead {
-    background: #f1f1f1;
-    border-radius: 8px;
-    font-weight: 600;
+    background: #111 !important;
+    font-weight: 700;
+    color: var(--text) !important;
+}
+
+.table > :not(caption) > * > * {
+    padding: 14px 12px;
+    vertical-align: middle;
+    background-color: #1a1a1a !important;
+    color: var(--text) !important;
+    border-color: #2b2b2b;
+}
+
+.table tbody tr {
+    background: #1a1a1a !important;
 }
 
 .table tbody tr:hover {
-    background: rgba(0,0,0,0.04);
+    background: #222 !important;
 }
 
+.table.card-table {
+    margin-bottom: 0;
+}
+
+.table.card-table thead {
+    background: transparent;
+}
+
+.chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 10px;
+    border-radius: 999px;
+    font-size: 0.85rem;
+    font-weight: 600;
+    border: 1px solid var(--border);
+    color: #0f0f0f;
+}
+
+.chip.success { background: rgba(22,163,74,0.1); color: #166534; border-color: rgba(22,163,74,0.25); }
+.chip.info    { background: rgba(14,165,233,0.12); color: #075985; border-color: rgba(14,165,233,0.28); }
+.chip.warn    { background: rgba(245,158,11,0.15); color: #854d0e; border-color: rgba(245,158,11,0.3); }
+.chip.danger  { background: rgba(220,38,38,0.12); color: var(--danger); border-color: rgba(220,38,38,0.3); }
 
 /* -------------------------------------------------
-   FORMS — login, register, checkout
+   EMPTY STATES
 ---------------------------------------------------*/
-.form-box,
-.checkout-box {
-    background: rgba(255,255,255,0.9);
-    padding: 28px;
-    border-radius: 16px;
-    backdrop-filter: blur(8px);
-    box-shadow: 0 6px 25px rgba(0,0,0,0.1);
-    animation: slideUp 0.6s ease-out;
+.empty-state {
+    padding: 34px;
+    text-align: center;
+    color: var(--muted);
 }
 
-@keyframes slideUp {
-    0% { transform: translateY(40px); opacity: 0; }
-    100% { transform: translateY(0); opacity: 1; }
+.hero {
+    background: linear-gradient(135deg, #1f1f1f, #181818);
+    border: 1px solid var(--border);
+    border-radius: 18px;
+    padding: 36px;
+    box-shadow: var(--shadow);
 }
 
+.hero-title {
+    font-weight: 800;
+    font-size: clamp(2rem, 2.5vw, 2.8rem);
+    letter-spacing: -0.03em;
+    margin-bottom: 0.4rem;
+}
+
+.hero-subtitle {
+    color: var(--muted);
+    font-size: 1rem;
+}
 
 /* -------------------------------------------------
-   PAYMENT SUCCESS ANIMATION
+   PAYMENT SUCCESS / BADGES
 ---------------------------------------------------*/
 .payment-success {
-    animation: popFade 0.8s ease forwards;
+    animation: popFade 0.6s ease forwards;
 }
 
 @keyframes popFade {
-    0%   { transform: scale(0.6); opacity: 0; }
-    70%  { transform: scale(1.05); opacity: 1; }
+    0%   { transform: scale(0.95); opacity: 0; }
+    70%  { transform: scale(1.02); opacity: 1; }
     100% { transform: scale(1); }
 }
 
-/* Checkmark pulse */
 .checkmark {
-    font-size: 4.2rem;
-    color: #2e7d32;
-    animation: pulseCheck 1s ease-out;
+    font-size: 4rem;
+    color: #16a34a;
 }
 
-@keyframes pulseCheck {
-    0%   { transform: scale(0.8); opacity: 0.5; }
-    50%  { transform: scale(1.25); opacity: 1; }
-    100% { transform: scale(1); opacity: 1; }
+.status-badge {
+    padding: 6px 10px;
+    border-radius: 12px;
+    font-weight: 700;
+    font-size: 0.9rem;
 }
 
+.status-completed { background: rgba(22,163,74,0.12); color: var(--success); }
+.status-delivering { background: rgba(14,165,233,0.12); color: var(--info); }
+.status-preparing { background: rgba(245,158,11,0.15); color: var(--warning); }
+.status-pending { background: rgba(245,158,11,0.12); color: var(--warning); }
+.status-danger { background: rgba(220,38,38,0.12); color: var(--danger); }
 
 /* -------------------------------------------------
-   PAYMENT BUTTONS
+   LIST / UTILITY
 ---------------------------------------------------*/
-.payment-buttons a {
-    transition: 0.25s ease;
-    border-radius: 8px;
+.ratio img {
+    object-fit: cover;
 }
 
-.payment-buttons a:hover {
-    transform: translateY(-3px);
+.shadow-sm {
+    box-shadow: 0 8px 22px rgba(0,0,0,0.06) !important;
+}
+
+.card-section {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.pill-nav {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+
+.pill-nav .btn {
+    border-radius: 999px;
+    padding: 8px 14px;
+}
+
+.section-helper {
+    color: var(--muted);
+    font-size: 0.95rem;
+}
+
+.list-compact li {
+    margin-bottom: 6px;
+}
+
+.floating {
+    box-shadow: 0 14px 45px rgba(0,0,0,0.12);
+}
+
+
+.form-control::placeholder,
+.form-select::placeholder {
+    color: var(--muted);
+}
+
+
+/* Dark-mode text overrides for Bootstrap helpers */
+.text-dark, .link-dark, a.link-dark {
+    color: var(--text) !important;
+}
+
+a {
+    color: var(--accent);
+}
+
+.table td, .table th {
+    color: var(--text);
+}
+
+.bg-secondary { background-color: #d1d5db; color: #111; }
+
+.badge.bg-secondary, .badge-default { background: #d1d5db; color: #111 !important; }
+
+.list-group-item {
+    background: #1b1b1b !important;
+    color: var(--text) !important;
+    border-color: #2b2b2b !important;
 }

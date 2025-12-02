@@ -12,7 +12,7 @@
 <body class="page">
 
 <!-- NAVBAR -->
-<%- include("partials/navbar", { 
+<%- include("partial", { 
   user, 
   brandHref: "/shopping", 
   navLinks: [
@@ -23,9 +23,13 @@
 
 <!-- HERO -->
 <div class="container py-4">
-  <div class="text-center mb-4">
-    <h1 class="hero-title fw-bold">Welcome to Grow Mart!🛒</h1>
-    <p class="hero-subtitle text-muted">Fresh deals, fast checkout.</p>
+  <div class="hero mb-4">
+    <h1 class="hero-title">Shop our freshest picks</h1>
+    <p class="hero-subtitle">Browse by category or search for what you need.</p>
+    <div class="d-flex gap-2 flex-wrap mt-3">
+      <a href="#products" class="btn btn-primary btn-sm">Start browsing</a>
+      <a href="/cart" class="btn btn-light btn-sm">View cart</a>
+    </div>
   </div>
 
   <!-- CAROUSEL -->
@@ -48,24 +52,32 @@
 <div class="container py-4">
 
   <!-- Greeting -->
-  <div class="d-flex align-items-center justify-content-between mb-3">
+  <div class="section-heading">
     <div>
-      <p class="text-muted small mb-0">Welcome back</p>
-      <p class="fw-semibold mb-0"><%= user.username %> (<%= user.role %>)</p>
+      <div class="section-title">Welcome back</div>
+      <div class="section-subtitle"><%= user.username %> (<%= user.role %>)</div>
     </div>
   </div>
 
   <!-- SEARCH BAR -->
-  <form action="/shopping" method="GET" class="input-group mb-4 shadow-sm">
-    <input 
-      type="text" 
-      class="form-control" 
-      placeholder="Search for products..." 
-      name="search"
-      value="<%= typeof search !== 'undefined' ? search : '' %>"
-    >
-    <button class="btn btn-primary">Search</button>
-  </form>
+  <div class="glass mb-4">
+    <form action="/shopping" method="GET" class="row g-2 align-items-center">
+      <div class="col-12 col-md-8">
+        <input 
+          type="text" 
+          class="form-control"
+          placeholder="Search for products..."
+          name="search"
+          aria-label="Search for products"
+          value="<%= typeof search !== 'undefined' ? search : '' %>"
+        >
+      </div>
+      <div class="col-12 col-md-4 d-flex gap-2">
+        <button class="btn btn-primary w-100">Search</button>
+        <a href="/shopping" class="btn btn-light w-100">Clear</a>
+      </div>
+    </form>
+  </div>
 
   <!-- CATEGORY FILTER -->
   <%
@@ -84,7 +96,7 @@
     ];
   %>
 
-  <div class="d-flex flex-wrap gap-2 mb-4">
+  <div class="pill-nav mb-4">
     <% categories.forEach(c => { %>
       <a 
         href="/shopping<%= c !== 'All' ? ('?category=' + encodeURIComponent(c)) : '' %>" 
@@ -96,7 +108,7 @@
   </div>
 
   <!-- PRODUCT GRID -->
-  <div class="row g-4">
+  <div id="products" class="row g-4">
 
     <% if (products.length === 0) { %>
       <div class="text-center mt-5">

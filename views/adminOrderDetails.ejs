@@ -11,7 +11,7 @@
 <body class="page">
 
 <!-- NAVBAR -->
-<%- include("partials/navbar", { 
+<%- include("partial", { 
   user, 
   brandHref: "/", 
   navLinks: [
@@ -39,8 +39,7 @@
           <!-- Payment Status -->
           <p>
             <strong>Payment Status:</strong>
-            <span class="badge 
-              <%= order.status === 'Paid' ? 'bg-success' : 'bg-warning' %>">
+            <span class="chip <%= order.status === 'Paid' ? 'success' : 'warn' %>">
               <%= order.status %>
             </span>
           </p>

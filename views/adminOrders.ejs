@@ -10,7 +10,7 @@
 <body class="page">
 
 <!-- NAVBAR -->
-<%- include("partials/navbar", { 
+<%- include("partial", { 
   user, 
   brandHref: "/", 
   navLinks: [
@@ -50,7 +50,7 @@
           <td><%= order.paymentType %></td>
 
           <td>
-            <span class="badge bg-success"><%= order.status %></span>
+            <span class="chip <%= order.status === 'Paid' ? 'success' : 'warn' %>"><%= order.status %></span>
           </td>
 
           <!-- FIXED: Convert SQL string into a readable date -->

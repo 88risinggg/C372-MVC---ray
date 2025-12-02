@@ -25,7 +25,7 @@
 <body class="page">
 
 <!-- NAVBAR -->
-<%- include("partials/navbar", { 
+<%- include("partial", { 
   user, 
   brandHref: "/", 
   navLinks: (user && user.role !== "admin") ? [{ href: "/shopping", label: "Shop" }] : undefined 
@@ -33,9 +33,13 @@
 
 <!-- HERO -->
 <div class="container py-4">
-  <div class="text-center mb-4">
-    <h1 class="hero-title fw-bold">Welcome to Grow Mart!🛒</h1>
-    <p class="hero-subtitle text-muted">Fresh deals, fast checkout.</p>
+  <div class="hero mb-4">
+    <h1 class="hero-title">Welcome to Grow Mart!??</h1>
+    <p class="hero-subtitle">Fresh deals, fast checkout.</p>
+    <div class="d-flex gap-2 flex-wrap mt-3">
+      <a href="/shopping" class="btn btn-primary btn-sm">Start shopping</a>
+      <a href="/orders" class="btn btn-light btn-sm">My orders</a>
+    </div>
   </div>
 
   <!-- CAROUSEL -->
@@ -54,9 +58,12 @@
   </div>
 
   <!-- FEATURED ITEMS -->
-  <div class="d-flex align-items-center justify-content-between mb-3">
-    <h3 class="fw-bold">Featured Items</h3>
-    <a href="/shopping" class="btn btn-primary btn-sm">View All</a>
+  <div class="section-heading">
+    <div>
+      <div class="section-title">Featured Items</div>
+      <div class="section-subtitle">Hand-picked picks for you</div>
+    </div>
+    <a href="/shopping" class="btn btn-outline-primary btn-sm">View All</a>
   </div>
 
   <!-- FEATURED GRID -->
