@@ -48,7 +48,13 @@
       <ul class="navbar-nav ms-auto">
         <% links.forEach(link => { %>
           <li class="nav-item">
-            <a class="nav-link <%= link.active ? "active" : "" %>" href="<%= link.href %>"><%= link.label %></a>
+            <%
+              const isCart = link.href === "/cart";
+              const cartLabel = (typeof cartCount !== "undefined" && cartCount > 0 && isCart)
+                ? `${link.label} (${cartCount})`
+                : link.label;
+            %>
+            <a class="nav-link <%= link.active ? "active" : "" %>" href="<%= link.href %>"><%= cartLabel %></a>
           </li>
         <% }) %>
 

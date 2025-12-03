@@ -58,6 +58,15 @@ app.use(session({
 
 app.use(flash());
 
+// Expose user and cart count to all views
+app.use((req, res, next) => {
+    res.locals.user = req.session?.user || null;
+    res.locals.cartCount = (req.session?.cart || []).reduce((sum, item) => {
+        return sum + (parseInt(item.quantity) || 0);
+    }, 0);
+    next();
+});
+
 // Authentication Middleware
 const checkAuthenticated = (req, res, next) => {
     if (req.session?.user) return next();
@@ -171,6 +180,9 @@ app.get("/logout", (req, res) => {
 // Helper to safely expose the logged-in user (or null) to views
 const attachUser = (req, res, next) => {
     res.locals.user = req.session?.user || null;
+    res.locals.cartCount = (req.session?.cart || []).reduce((sum, item) => {
+        return sum + (parseInt(item.quantity) || 0);
+    }, 0);
     next();
 };
 

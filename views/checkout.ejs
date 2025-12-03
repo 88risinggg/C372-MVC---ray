@@ -149,16 +149,24 @@
                     </div>
                     <div class="mb-3">
                       <label class="form-label">Card Number</label>
-                      <input type="text" class="form-control card-required" name="cardNumber" inputmode="numeric" maxlength="19" placeholder="1234 5678 9012 3456">
+                      <input type="text" class="form-control card-required" id="cardNumber" name="cardNumber" inputmode="numeric" maxlength="19" placeholder="1234 5678 9012 3456" pattern="\\d{4}\\s\\d{4}\\s\\d{4}\\s\\d{4}">
                     </div>
                     <div class="row g-3">
                       <div class="col-sm-6">
-                        <label class="form-label">Expiry (MM/YY)</label>
-                        <input type="text" class="form-control card-required" name="cardExpiry" placeholder="MM/YY">
+                        <label class="form-label">Expiry (MM/YYYY)</label>
+                        <input 
+                          type="text" 
+                          class="form-control card-required" 
+                          id="cardExpiry" 
+                          name="cardExpiry"
+                          placeholder="MM/YYYY" 
+                          inputmode="numeric" 
+                          maxlength="7"
+                          pattern="(0[1-9]|1[0-2])\\/\\d{4}">
                       </div>
                       <div class="col-sm-6">
                         <label class="form-label">CVV</label>
-                        <input type="password" class="form-control card-required" name="cardCvv" maxlength="4" placeholder="***">
+                        <input type="password" class="form-control card-required" id="cardCvv" name="cardCvv" maxlength="4" placeholder="***" pattern="\\d{3,4}">
                       </div>
                     </div>
                   </div>
@@ -202,7 +210,7 @@
     </div>
   </div>
 
-  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
   <script>
     const methodRadios = document.querySelectorAll('input[name="paymentMethod"]');
     const cardSection = document.getElementById("card-section");
@@ -211,6 +219,9 @@
     const form = document.getElementById("checkout-form");
     const cardFields = Array.from(document.querySelectorAll(".card-required"));
     const errorBox = document.getElementById("payment-error");
+    const cardNumber = document.getElementById("cardNumber");
+    const cardExpiry = document.getElementById("cardExpiry");
+    const cardCvv = document.getElementById("cardCvv");
 
     const showOnly = (section) => {
       [cardSection, paynowSection, grabpaySection].forEach(block => {
@@ -262,6 +273,35 @@
           if (errorBox) errorBox.classList.remove("d-none");
           missing.focus();
         }
+      });
+    }
+
+    // Basic input masking / enforcement
+    if (cardNumber) {
+      cardNumber.addEventListener("input", () => {
+        let digits = cardNumber.value.replace(/\\D/g, "").slice(0, 16);
+        const parts = [];
+        for (let i = 0; i < digits.length; i += 4) {
+          parts.push(digits.substring(i, i + 4));
+        }
+        cardNumber.value = parts.join(" ");
+      });
+    }
+
+    // Expiry: allow typing MM/YY or picking a month; store final in hidden field as MM/YY
+    if (cardExpiry) {
+      cardExpiry.addEventListener("input", () => {
+        let digits = cardExpiry.value.replace(/\\D/g, "").slice(0, 6); // MMYYYY
+        if (digits.length >= 3) {
+          digits = digits.slice(0, 2) + "/" + digits.slice(2);
+        }
+        cardExpiry.value = digits;
+      });
+    }
+
+    if (cardCvv) {
+      cardCvv.addEventListener("input", () => {
+        cardCvv.value = cardCvv.value.replace(/\\D/g, "").slice(0, 4);
       });
     }
   </script>
