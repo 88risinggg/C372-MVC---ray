@@ -25,7 +25,7 @@
 <body class="page">
 
 <!-- NAVBAR -->
-<%- include("partial", { 
+<%- include("partial/navbar", { 
   user, 
   brandHref: "/", 
   navLinks: (user && user.role !== "admin") ? [{ href: "/shopping", label: "Shop" }] : undefined 

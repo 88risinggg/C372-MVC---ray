@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8">
@@ -16,7 +16,7 @@
 <body class="page">
 
   <!-- Navbar -->
-  <%- include("partial", { 
+  <%- include("partial/navbar", { 
     user, 
     brandHref: "/shopping", 
     brandLabel: "Supermarket App", 
@@ -31,7 +31,7 @@
 
     <div class="card glass text-center p-4">
 
-      <div class="display-6 mb-3">✅ Payment Successful</div>
+      <div class="display-6 mb-3">? Payment Successful</div>
 
       <p class="lead mb-2">Thank you, <%= user.username %>!</p>
       <p>Your simulated payment has been completed.</p>
