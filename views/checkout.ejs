@@ -107,6 +107,30 @@
                 <div class="card border-0 shadow-sm">
                   <div class="card-body">
                     <div class="form-check">
+                      <input class="form-check-input" type="radio" name="paymentMethod" value="Airwallex Card" aria-label="Airwallex Card" id="pm-airwallex">
+                      <label class="form-check-label fw-semibold" for="pm-airwallex">Airwallex (Card)</label>
+                      <p class="small text-muted mb-0">Redirect to Airwallex hosted payment page</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div class="col-12">
+                <div class="card border-0 shadow-sm">
+                  <div class="card-body">
+                    <div class="form-check">
+                      <input class="form-check-input" type="radio" name="paymentMethod" value="PayPal" aria-label="PayPal" id="pm-paypal">
+                      <label class="form-check-label fw-semibold" for="pm-paypal">PayPal</label>
+                      <p class="small text-muted mb-0">Pay with your PayPal account</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div class="col-12">
+                <div class="card border-0 shadow-sm">
+                  <div class="card-body">
+                    <div class="form-check">
                       <input class="form-check-input" type="radio" name="paymentMethod" value="PayNow" aria-label="PayNow" id="pm-paynow">
                       <label class="form-check-label fw-semibold" for="pm-paynow">PayNow</label>
                       <p class="small text-muted mb-0">Instant bank transfer</p>
@@ -122,6 +146,18 @@
                       <input class="form-check-input" type="radio" name="paymentMethod" value="GrabPay" aria-label="GrabPay" id="pm-grabpay">
                       <label class="form-check-label fw-semibold" for="pm-grabpay">GrabPay</label>
                       <p class="small text-muted mb-0">Pay with Grab wallet</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div class="col-12">
+                <div class="card border-0 shadow-sm">
+                  <div class="card-body">
+                    <div class="form-check">
+                      <input class="form-check-input" type="radio" name="paymentMethod" value="NETS QR" aria-label="NETS QR" id="pm-nets">
+                      <label class="form-check-label fw-semibold" for="pm-nets">NETS QR</label>
+                      <p class="small text-muted mb-0">Scan with your banking or wallet app</p>
                     </div>
                   </div>
                 </div>
@@ -172,6 +208,20 @@
                   </div>
                 </div>
 
+                <div id="airwallex-section" class="card border-0 shadow-sm d-none">
+                  <div class="card-body text-center">
+                    <h6 class="fw-semibold mb-3">Airwallex</h6>
+                    <p class="small text-muted mb-0">You will be redirected to Airwallex to enter your card details.</p>
+                  </div>
+                </div>
+
+                <div id="paypal-section" class="card border-0 shadow-sm d-none">
+                  <div class="card-body text-center">
+                    <h6 class="fw-semibold mb-3">PayPal</h6>
+                    <p class="small text-muted mb-0">You will be redirected to PayPal to approve the payment.</p>
+                  </div>
+                </div>
+
                 <div id="paynow-section" class="card border-0 shadow-sm d-none">
                   <div class="card-body text-center">
                     <h6 class="fw-semibold mb-3">PayNow</h6>
@@ -185,6 +235,13 @@
                     <h6 class="fw-semibold mb-3">GrabPay</h6>
                     <p class="small text-muted">Scan with Grab to complete payment.</p>
                     <img src="/images/grabqr.jpg" alt="GrabPay QR" class="img-fluid rounded shadow-sm" style="max-width: 280px;">
+                  </div>
+                </div>
+
+                <div id="nets-section" class="card border-0 shadow-sm d-none">
+                  <div class="card-body text-center">
+                    <h6 class="fw-semibold mb-3">NETS QR</h6>
+                    <p class="small text-muted mb-0">You will be redirected to a NETS QR page to scan and complete payment.</p>
                   </div>
                 </div>
               </div>
@@ -214,8 +271,11 @@
   <script>
     const methodRadios = document.querySelectorAll('input[name="paymentMethod"]');
     const cardSection = document.getElementById("card-section");
+    const airwallexSection = document.getElementById("airwallex-section");
+    const paypalSection = document.getElementById("paypal-section");
     const paynowSection = document.getElementById("paynow-section");
     const grabpaySection = document.getElementById("grabpay-section");
+    const netsSection = document.getElementById("nets-section");
     const form = document.getElementById("checkout-form");
     const cardFields = Array.from(document.querySelectorAll(".card-required"));
     const errorBox = document.getElementById("payment-error");
@@ -224,7 +284,7 @@
     const cardCvv = document.getElementById("cardCvv");
 
     const showOnly = (section) => {
-      [cardSection, paynowSection, grabpaySection].forEach(block => {
+      [cardSection, airwallexSection, paypalSection, paynowSection, grabpaySection, netsSection].forEach(block => {
         if (!block) return;
         if (section && block === section) {
           block.classList.remove("d-none");
@@ -252,8 +312,17 @@
         case "GrabPay":
           showOnly(grabpaySection);
           break;
+        case "NETS QR":
+          showOnly(netsSection);
+          break;
         case "Cash on Delivery":
           showOnly(null);
+          break;
+        case "PayPal":
+          showOnly(paypalSection);
+          break;
+        case "Airwallex Card":
+          showOnly(airwallexSection);
           break;
         default: // Credit card or fallback
           showOnly(cardSection);

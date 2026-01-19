@@ -1,4 +1,4 @@
-let express, mysql, session, flash, multer, fs, path;
+let express, mysql, session, flash, multer, fs, path, axios, dotenv, netsQr, paypal, airwallex;
 try {
     express = require("express");
     mysql = require("mysql2");
@@ -7,14 +7,20 @@ try {
     multer = require("multer");
     fs = require("fs");
     path = require("path");
+    axios = require("axios");
+    dotenv = require("dotenv");
+    netsQr = require("./services/nets");
+    paypal = require("./services/paypal");
+    airwallex = require("./services/airwallex");
 } catch (err) {
     console.error("A required dependency is missing:", err.message);
     console.error("Install dependencies with:");
-    console.error("  npm install express mysql2 express-session connect-flash multer ejs");
+    console.error("  npm install express mysql2 express-session connect-flash multer ejs axios dotenv");
     process.exit(1);
 }
 
 const app = express();
+dotenv.config();
 
 // Ensure upload directory exists
 const uploadDir = path.join(__dirname, "public", "images");
@@ -47,6 +53,7 @@ connection.connect(err => {
 app.set("view engine", "ejs");
 app.use(express.static("public"));
 app.use(express.urlencoded({ extended: false }));
+app.use(express.json());
 
 // Session
 app.use(session({
@@ -194,6 +201,65 @@ const calculateTotals = (items = []) => {
     const gst = Math.round(taxable * 0.09 * 100) / 100; // 9% GST rounded to cents
     const total = Math.round((taxable + gst) * 100) / 100;
     return { subtotal, deliveryFee, gst, total };
+};
+
+const validateStock = (cart = []) => {
+    const stockChecks = cart.map(item => {
+        return new Promise((resolve, reject) => {
+            connection.query(
+                "SELECT quantity FROM products WHERE id = ?",
+                [item.id],
+                (err, rows) => {
+                    if (err) return reject(err);
+                    const available = rows[0]?.quantity ?? 0;
+                    if (available < item.quantity) {
+                        return reject(`${item.productName} only has ${available} left in stock.`);
+                    }
+                    resolve();
+                }
+            );
+        });
+    });
+    return Promise.all(stockChecks);
+};
+
+const createOrderFromCart = (userId, cart = []) => {
+    return new Promise((resolve, reject) => {
+        const totals = calculateTotals(cart);
+        connection.query(
+            "INSERT INTO orders (user_id, total) VALUES (?, ?)",
+            [userId, totals.total],
+            (err, orderResult) => {
+                if (err) return reject(err);
+
+                const orderId = orderResult.insertId;
+                const tasks = cart.map(item => {
+                    return new Promise((resolveItem, rejectItem) => {
+                        connection.query(
+                            "INSERT INTO order_items (order_id, product_id, quantity, price) VALUES (?, ?, ?, ?)",
+                            [orderId, item.id, item.quantity, item.price],
+                            (err1) => {
+                                if (err1) return rejectItem(err1);
+
+                                connection.query(
+                                    "UPDATE products SET quantity = quantity - ? WHERE id = ?",
+                                    [item.quantity, item.id],
+                                    (err2) => {
+                                        if (err2) return rejectItem(err2);
+                                        resolveItem();
+                                    }
+                                );
+                            }
+                        );
+                    });
+                });
+
+                Promise.all(tasks)
+                    .then(() => resolve({ orderId, totals }))
+                    .catch(reject);
+            }
+        );
+    });
 };
 
 // INVENTORY (admin only)
@@ -466,95 +532,310 @@ app.get("/checkout", checkAuthenticated, (req, res) => {
 // Submit checkout
 app.post("/checkout", checkAuthenticated, (req, res) => {
     const cart = req.session.cart || [];
+    const paymentMethod = (req.body.paymentMethod || "").trim();
 
     if (!cart.length) {
         req.flash("error", "Your cart is empty.");
         return res.redirect("/shopping");
     }
 
-    // Step 1 — Validate stock BEFORE placing order
-    const stockChecks = cart.map(item => {
-        return new Promise((resolve, reject) => {
-            connection.query(
-                "SELECT quantity FROM products WHERE id = ?",
-                [item.id],
-                (err, rows) => {
-                    if (err) return reject(err);
-
-                    const available = rows[0].quantity;
-
-                    if (available < item.quantity) {
-                        return reject(
-                            `${item.productName} only has ${available} left in stock.`
-                        );
-                    }
-
-                    resolve();
+    if (paymentMethod === "Airwallex Card") {
+        return validateStock(cart)
+            .then(() => {
+                const totals = calculateTotals(cart);
+                const baseUrl = `${req.protocol}://${req.get("host")}`;
+                req.session.pendingOrder = {
+                    provider: "airwallex",
+                    cart: cart.map(item => ({ ...item })),
+                    totals
+                };
+                return airwallex.createPaymentLink({
+                    amount: totals.total,
+                    currency: process.env.AIRWALLEX_CURRENCY || "SGD",
+                    returnUrl: `${baseUrl}/airwallex/success`,
+                    cancelUrl: `${baseUrl}/airwallex/cancel`,
+                    merchantOrderId: `order_${req.session.user.id}_${Date.now()}`
+                });
+            })
+            .then(({ url, paymentLinkId }) => {
+                if (req.session.pendingOrder) {
+                    req.session.pendingOrder.airwallex = {
+                        paymentLinkId
+                    };
                 }
-            );
-        });
-    });
+                return res.redirect(url);
+            })
+            .catch(err => {
+                console.log("Airwallex error:", err);
+                req.flash("error", "Airwallex setup failed. Please try again.");
+                return res.redirect("/checkout");
+            });
+    }
 
-    Promise.all(stockChecks)
-        .then(() => {
-            // Step 2 – Insert order
-            const totals = calculateTotals(cart);
+    if (paymentMethod === "PayPal") {
+        return validateStock(cart)
+            .then(() => {
+                const totals = calculateTotals(cart);
+                const baseUrl = `${req.protocol}://${req.get("host")}`;
+                req.session.pendingOrder = {
+                    provider: "paypal",
+                    cart: cart.map(item => ({ ...item })),
+                    totals
+                };
+                return paypal.createOrder(
+                    totals.total,
+                    `${baseUrl}/paypal/success`,
+                    `${baseUrl}/paypal/cancel`
+                );
+            })
+            .then(({ approvalUrl }) => res.redirect(approvalUrl))
+            .catch(err => {
+                console.log("PayPal error:", err);
+                req.flash("error", "PayPal setup failed. Please try again.");
+                return res.redirect("/checkout");
+            });
+    }
 
-            connection.query(
-                "INSERT INTO orders (user_id, total) VALUES (?, ?)",
-                [req.session.user.id, totals.total],
-                (err, orderResult) => {
-                    if (err) throw err;
+    if (paymentMethod === "NETS QR") {
+        return validateStock(cart)
+            .then(() => {
+                const totals = calculateTotals(cart);
+                req.session.pendingOrder = {
+                    provider: "nets",
+                    cart: cart.map(item => ({ ...item })),
+                    totals
+                };
+                return netsQr.generateQrCode(req, res, totals.total);
+            })
+            .catch(err => {
+                req.flash("error", err);
+                return res.redirect("/checkout");
+            });
+    }
 
-                    const orderId = orderResult.insertId;
-
-                    // Step 3 — Insert order items + reduce product stock
-                    const tasks = cart.map(item => {
-                        return new Promise((resolve, reject) => {
-                            // Insert order item first
-                            connection.query(
-                                "INSERT INTO order_items (order_id, product_id, quantity, price) VALUES (?, ?, ?, ?)",
-                                [orderId, item.id, item.quantity, item.price],
-                                (err1) => {
-                                    if (err1) return reject(err1);
-
-                                    // Reduce stock
-                                    connection.query(
-                                        "UPDATE products SET quantity = quantity - ? WHERE id = ?",
-                                        [item.quantity, item.id],
-                                        (err2) => {
-                                            if (err2) return reject(err2);
-                                            resolve();
-                                        }
-                                    );
-                                }
-                            );
-                        });
-                    });
-
-                    Promise.all(tasks)
-                        .then(() => {
-                            req.session.cart = []; // empty cart
-                            res.render("paymentSuccess", {
-                                orderId,
-                                total: totals.total,
-                                user: req.session.user
-                            });
-                        })
-                        .catch(err => {
-                            console.log("Stock or insert error:", err);
-                            req.flash("error", "Order failed: " + err);
-                            res.redirect("/checkout");
-                        });
-                }
-            );
+    validateStock(cart)
+        .then(() => createOrderFromCart(req.session.user.id, cart))
+        .then(({ orderId, totals }) => {
+            req.session.cart = [];
+            res.render("paymentSuccess", {
+                orderId,
+                total: totals.total,
+                user: req.session.user
+            });
         })
         .catch(err => {
-            req.flash("error", err);
-            res.redirect("/cart"); // bounce user back to cart
+            console.log("Stock or insert error:", err);
+            req.flash("error", "Order failed: " + err);
+            res.redirect("/checkout");
         });
 });
 
+app.get("/airwallex/success", checkAuthenticated, (req, res) => {
+    const pending = req.session.pendingOrder;
+    const intentId =
+        req.query.payment_intent_id ||
+        req.query.payment_intent ||
+        req.query.intent_id ||
+        null;
+    const linkId =
+        req.query.payment_link_id ||
+        req.query.payment_link ||
+        pending?.airwallex?.paymentLinkId ||
+        null;
+    const status = (req.query.status || "").toString().toLowerCase();
+
+    if (!pending?.cart?.length || pending.provider !== "airwallex") {
+        req.flash("error", "No pending Airwallex order found.");
+        return res.redirect("/checkout");
+    }
+
+    const finalizeOrder = () => {
+        return createOrderFromCart(req.session.user.id, pending.cart)
+            .then(({ orderId, totals }) => {
+                req.session.cart = [];
+                req.session.pendingOrder = null;
+                res.render("paymentSuccess", {
+                    orderId,
+                    total: totals.total,
+                    user: req.session.user
+                });
+            });
+    };
+
+    const successStatuses = new Set(["succeeded", "success", "paid", "captured", "completed", "settled"]);
+
+    const verifyPromise = intentId
+        ? airwallex.getPaymentIntent(intentId)
+        : linkId
+            ? airwallex.getPaymentLink(linkId)
+            : Promise.resolve(null);
+
+    verifyPromise
+        .then(result => {
+            const remoteStatus = (result?.status || "").toString().toLowerCase();
+            if (successStatuses.has(remoteStatus)) {
+                return finalizeOrder();
+            }
+            if (status && successStatuses.has(status)) {
+                return finalizeOrder();
+            }
+            throw new Error("Airwallex payment not completed.");
+        })
+        .catch(err => {
+            console.log("Airwallex verify error:", err);
+            req.flash("error", "Airwallex payment not completed.");
+            return res.redirect("/checkout");
+        });
+});
+
+app.get("/airwallex/cancel", checkAuthenticated, (req, res) => {
+    req.session.pendingOrder = null;
+    res.render("airwallexFail", {
+        message: "Airwallex payment was cancelled.",
+        user: req.session.user
+    });
+});
+
+app.get("/paypal/success", checkAuthenticated, (req, res) => {
+    const pending = req.session.pendingOrder;
+    const orderId = req.query.token;
+
+    if (!pending?.cart?.length || pending.provider !== "paypal") {
+        req.flash("error", "No pending PayPal order found.");
+        return res.redirect("/checkout");
+    }
+
+    if (!orderId) {
+        req.flash("error", "Missing PayPal order ID.");
+        return res.redirect("/checkout");
+    }
+
+    paypal.captureOrder(orderId)
+        .then(capture => {
+            if (capture?.status !== "COMPLETED") {
+                throw new Error("PayPal capture not completed.");
+            }
+            return createOrderFromCart(req.session.user.id, pending.cart);
+        })
+        .then(({ orderId: internalOrderId, totals }) => {
+            req.session.cart = [];
+            req.session.pendingOrder = null;
+            res.render("paymentSuccess", {
+                orderId: internalOrderId,
+                total: totals.total,
+                user: req.session.user
+            });
+        })
+        .catch(err => {
+            console.log("PayPal capture error:", err);
+            req.flash("error", "PayPal capture failed. Please try again.");
+            res.redirect("/checkout");
+        });
+});
+
+app.get("/paypal/cancel", checkAuthenticated, (req, res) => {
+    req.session.pendingOrder = null;
+    res.render("paypalFail", {
+        message: "PayPal payment was cancelled.",
+        user: req.session.user
+    });
+});
+
+app.get("/nets-qr/success", checkAuthenticated, (req, res) => {
+    const pending = req.session.pendingOrder;
+    if (!pending?.cart?.length || pending.provider !== "nets") {
+        req.flash("error", "No pending NETS order found.");
+        return res.redirect("/checkout");
+    }
+
+    createOrderFromCart(req.session.user.id, pending.cart)
+        .then(({ orderId, totals }) => {
+            req.session.cart = [];
+            req.session.pendingOrder = null;
+            res.render("paymentSuccess", {
+                orderId,
+                total: totals.total,
+                user: req.session.user
+            });
+        })
+        .catch(err => {
+            console.log("NETS order error:", err);
+            req.flash("error", "Order failed: " + err);
+            res.redirect("/checkout");
+        });
+});
+
+app.get("/nets-qr/fail", checkAuthenticated, (req, res) => {
+    req.session.pendingOrder = null;
+    res.render("netsTxnFailStatus", {
+        message: "Transaction failed. Please try again.",
+        user: req.session.user
+    });
+});
+
+app.get("/sse/payment-status/:txnRetrievalRef", async (req, res) => {
+    res.set({
+        "Content-Type": "text/event-stream",
+        "Cache-Control": "no-cache",
+        "Connection": "keep-alive"
+    });
+
+    if (!process.env.API_KEY || !process.env.PROJECT_ID) {
+        res.write(`data: ${JSON.stringify({ error: "NETS API keys missing." })}\n\n`);
+        return res.end();
+    }
+
+    const txnRetrievalRef = req.params.txnRetrievalRef;
+    let pollCount = 0;
+    const maxPolls = 60;
+    let frontendTimeoutStatus = 0;
+
+    const interval = setInterval(async () => {
+        pollCount++;
+
+        try {
+            const response = await axios.post(
+                "https://sandbox.nets.openapipaas.com/api/v1/common/payments/nets-qr/query",
+                { txn_retrieval_ref: txnRetrievalRef, frontend_timeout_status: frontendTimeoutStatus },
+                {
+                    headers: {
+                        "api-key": process.env.API_KEY,
+                        "project-id": process.env.PROJECT_ID,
+                        "Content-Type": "application/json"
+                    }
+                }
+            );
+
+            res.write(`data: ${JSON.stringify(response.data)}\n\n`);
+
+            const resData = response.data?.result?.data || {};
+            if (resData.response_code === "00" && resData.txn_status === 1) {
+                res.write(`data: ${JSON.stringify({ success: true })}\n\n`);
+                clearInterval(interval);
+                res.end();
+            } else if (frontendTimeoutStatus === 1 && (resData.response_code !== "00" || resData.txn_status === 2)) {
+                res.write(`data: ${JSON.stringify({ fail: true, ...resData })}\n\n`);
+                clearInterval(interval);
+                res.end();
+            }
+        } catch (err) {
+            clearInterval(interval);
+            res.write(`data: ${JSON.stringify({ error: err.message })}\n\n`);
+            res.end();
+        }
+
+        if (pollCount >= maxPolls) {
+            clearInterval(interval);
+            frontendTimeoutStatus = 1;
+            res.write(`data: ${JSON.stringify({ fail: true, error: "Timeout" })}\n\n`);
+            res.end();
+        }
+    }, 5000);
+
+    req.on("close", () => {
+        clearInterval(interval);
+    });
+});
 
 // View orders
 app.get("/orders", checkAuthenticated, (req, res) => {
