@@ -89,6 +89,9 @@
             <p class="text-muted small mb-3">Choose a payment method and place your order.</p>
 
             <form id="checkout-form" method="POST" action="/checkout" class="row g-3">
+              <% if (errors && errors.length) { %>
+                <div class="alert alert-danger"><%= errors[0] %></div>
+              <% } %>
               <div id="payment-error" class="alert alert-warning d-none">Please fill in all card details to continue.</div>
 
               <div class="col-12">

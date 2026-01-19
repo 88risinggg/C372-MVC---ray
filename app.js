@@ -566,7 +566,11 @@ app.post("/checkout", checkAuthenticated, (req, res) => {
                 return res.redirect(url);
             })
             .catch(err => {
-                console.log("Airwallex error:", err);
+                if (err?.response?.data) {
+                    console.log("Airwallex error response:", err.response.data);
+                } else {
+                    console.log("Airwallex error:", err);
+                }
                 req.flash("error", "Airwallex setup failed. Please try again.");
                 return res.redirect("/checkout");
             });

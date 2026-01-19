@@ -42,13 +42,16 @@ exports.createPaymentLink = async ({ amount, currency, returnUrl, cancelUrl, mer
     `${getBaseUrl()}/api/v1/pa/payment_links/create`,
     {
       request_id: requestId,
+      reusable: false,
       amount: Number(amount).toFixed(2),
       currency,
       title: "Order Payment",
       description: "Checkout payment",
       merchant_order_id: merchantOrderId,
       return_url: returnUrl,
-      cancel_url: cancelUrl
+      success_url: returnUrl,
+      cancel_url: cancelUrl,
+      payment_methods: ["card"]
     },
     {
       headers: {
@@ -58,9 +61,17 @@ exports.createPaymentLink = async ({ amount, currency, returnUrl, cancelUrl, mer
     }
   );
 
-  const url = response.data?.url;
-  const paymentLinkId = response.data?.id;
+  const url =
+    response.data?.url ||
+    response.data?.payment_url ||
+    response.data?.payment_link_url ||
+    response.data?.checkout_url ||
+    response.data?.data?.url ||
+    response.data?.data?.payment_url ||
+    response.data?.data?.checkout_url;
+  const paymentLinkId = response.data?.id || response.data?.data?.id;
   if (!url) {
+    console.log("Airwallex createPaymentLink response:", response.data);
     throw new Error("Airwallex payment link URL missing.");
   }
 
