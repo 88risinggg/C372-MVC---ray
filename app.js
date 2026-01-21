@@ -1,9 +1,8 @@
-let express, mysql, session, flash, multer, fs, path, axios, dotenv, netsQr, paypal, airwallex;
+let express, mysql, session, multer, fs, path, axios, dotenv, netsQr, paypal, airwallex;
 try {
     express = require("express");
     mysql = require("mysql2");
     session = require("express-session");
-    flash = require("connect-flash");
     multer = require("multer");
     fs = require("fs");
     path = require("path");
@@ -15,10 +14,11 @@ try {
 } catch (err) {
     console.error("A required dependency is missing:", err.message);
     console.error("Install dependencies with:");
-    console.error("  npm install express mysql2 express-session connect-flash multer ejs axios dotenv");
+    console.error("  npm install express mysql2 express-session multer ejs axios dotenv");
     process.exit(1);
 }
 
+const format = require("util").format;
 const app = express();
 dotenv.config();
 
@@ -63,7 +63,32 @@ app.use(session({
     cookie: { maxAge: 1000 * 60 * 60 * 24 * 7 }
 }));
 
-app.use(flash());
+app.use((req, res, next) => {
+    req.flash = (type, msg, ...args) => {
+        if (req.session === undefined) {
+            throw new Error("req.flash() requires sessions");
+        }
+        const msgs = req.session.flash || (req.session.flash = {});
+        if (type && msg) {
+            if (args.length && format) {
+                msg = format(msg, ...args);
+            } else if (Array.isArray(msg)) {
+                msg.forEach(val => {
+                    (msgs[type] = msgs[type] || []).push(val);
+                });
+                return msgs[type].length;
+            }
+            return (msgs[type] = msgs[type] || []).push(msg);
+        } else if (type) {
+            const arr = msgs[type];
+            delete msgs[type];
+            return arr || [];
+        }
+        req.session.flash = {};
+        return msgs;
+    };
+    next();
+});
 
 // Expose user and cart count to all views
 app.use((req, res, next) => {

@@ -26,16 +26,19 @@
 }) %>
 
 
-<div class="container py-4">
-
-  <!-- Header -->
-  <div class="d-flex align-items-center justify-content-between mb-3">
+<div class="container page-shell">
+  <div class="page-header">
     <div>
-      <p class="text-muted small mb-0">Order history for</p>
-      <p class="fw-semibold mb-0"><%= user.username %></p>
+      <p class="page-kicker">Orders</p>
+      <h1 class="page-title">Order History</h1>
+      <p class="page-subtitle">Review past orders and track their status.</p>
+      <div class="page-meta mt-2">
+        <span class="meta-pill">Customer <span class="fw-semibold"><%= user.username %></span></span>
+      </div>
     </div>
-
-    <a href="/shopping" class="btn btn-outline-primary btn-sm">Keep Shopping</a>
+    <div class="page-actions">
+      <a href="/shopping" class="btn btn-outline-primary">Keep Shopping</a>
+    </div>
   </div>
 
   <!-- Errors -->
@@ -52,7 +55,7 @@
       <% if (!orders || !orders.length) { %>
 
         <div class="text-center py-4">
-          <p class="mb-2 text-muted">You haven’t placed any orders yet.</p>
+          <p class="mb-2 text-muted">You haven't placed any orders yet.</p>
           <a href="/shopping" class="btn btn-primary">Start Shopping</a>
         </div>
 

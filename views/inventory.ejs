@@ -26,12 +26,24 @@
   }) %>
 
   <!-- Main Container -->
-  <div class="container mt-4">
-
-    <!-- Welcome Text -->
-    <p class="text-muted">
-      Welcome, <strong><%= user.username %></strong> (<%= user.role %>)
-    </p>
+  <div class="container page-shell">
+    <div class="page-header">
+      <div>
+        <p class="page-kicker">Admin</p>
+        <h1 class="page-title">Product Inventory</h1>
+        <p class="page-subtitle">Manage stock levels, pricing, and product details.</p>
+        <div class="page-meta mt-2">
+          <span class="meta-pill">Signed in as <span class="fw-semibold"><%= user.username %></span></span>
+        </div>
+      </div>
+      <div class="page-actions">
+        <form action="/inventory" method="GET" class="input-group">
+          <input type="text" name="search" class="form-control form-control-sm" placeholder="Search products..."
+                 value="<%= typeof search !== 'undefined' ? search : '' %>">
+          <button class="btn btn-primary btn-sm">Go</button>
+        </form>
+      </div>
+    </div>
 
     <% if (outOfStock && outOfStock.length > 0) { %>
       <div class="alert alert-warning d-flex align-items-start gap-2">
@@ -43,17 +55,6 @@
         </div>
       </div>
     <% } %>
-
-    <div class="d-flex justify-content-between align-items-center mb-3">
-      <h2 class="mb-0">Product Inventory</h2>
-
-      <!-- Search Bar -->
-      <form action="/inventory" method="GET" class="input-group" style="max-width: 280px;">
-        <input type="text" name="search" class="form-control form-control-sm" placeholder="Search products..."
-               value="<%= typeof search !== 'undefined' ? search : '' %>">
-        <button class="btn btn-primary btn-sm">Go</button>
-      </form>
-    </div>
 
     <!-- Product Table -->
     <div class="table-responsive glass p-3">

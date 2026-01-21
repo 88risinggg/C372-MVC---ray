@@ -19,9 +19,17 @@
   ] 
 }) %>
 
-<div class="container mt-4">
-
-  <h2 class="mb-4">All User Orders</h2>
+<div class="container page-shell">
+  <div class="page-header">
+    <div>
+      <p class="page-kicker">Admin</p>
+      <h1 class="page-title">All User Orders</h1>
+      <p class="page-subtitle">Monitor payments, totals, and fulfilment status.</p>
+      <div class="page-meta mt-2">
+        <span class="meta-pill"><%= orders.length %> orders</span>
+      </div>
+    </div>
+  </div>
 
   <div class="table-responsive glass p-3">
     <table class="table table-hover text-center align-middle">

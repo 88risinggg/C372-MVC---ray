@@ -22,9 +22,12 @@
   ] }) %>
 
   <!-- Login Form -->
-  <div class="container mt-5" style="max-width: 450px;">
-
-    <h2 class="text-center mb-4">Login</h2>
+  <div class="container page-shell auth-shell">
+    <div class="page-header page-header--center mb-4">
+      <p class="page-kicker">Account</p>
+      <h1 class="page-title">Welcome back</h1>
+      <p class="page-subtitle">Sign in to continue shopping.</p>
+    </div>
 
     <!-- Error Messages -->
     <% if (errors && errors.length > 0) { %>
@@ -78,7 +81,7 @@
 
       <!-- Extra Link -->
       <p class="text-center mt-3">
-        Don’t have an account?  
+        Don't have an account?
         <a href="/register">Register here</a>
       </p>
 
@@ -88,3 +91,4 @@
 
 </body>
 </html>
+

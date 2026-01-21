@@ -23,16 +23,20 @@
 }) %>
 
 
-<div class="container py-4">
-
-  <!-- Header -->
-  <div class="d-flex align-items-center justify-content-between mb-3">
+<div class="container page-shell">
+  <div class="page-header">
     <div>
-      <p class="text-muted small mb-0">Order</p>
-      <p class="fw-bold mb-0">#<%= order.id %></p>
+      <p class="page-kicker">Order</p>
+      <h1 class="page-title">Order #<%= order.id %></h1>
+      <p class="page-subtitle">Details, totals, and items for this order.</p>
+      <div class="page-meta mt-2">
+        <span class="meta-pill">Total <span class="fw-semibold">$<%= Number(order.total || 0).toFixed(2) %></span></span>
+        <span class="meta-pill">Payment <span class="fw-semibold"><%= order.paymentType %></span></span>
+      </div>
     </div>
-
-    <a href="/orders" class="btn btn-outline-primary btn-sm">Back to Orders</a>
+    <div class="page-actions">
+      <a href="/orders" class="btn btn-outline-primary">Back to Orders</a>
+    </div>
   </div>
 
   <!-- Error -->

@@ -26,7 +26,22 @@
   }) %>
 
   <!-- Main Checkout Container -->
-  <div class="container py-4">
+  <div class="container page-shell">
+    <div class="page-header">
+      <div>
+        <p class="page-kicker">Checkout</p>
+        <h1 class="page-title">Secure payment</h1>
+        <p class="page-subtitle">Choose a payment method and place your order.</p>
+        <div class="page-meta mt-2">
+          <span class="meta-pill">Total <span class="fw-semibold">$<%= total.toFixed(2) %></span></span>
+          <span class="meta-pill"><%= items.length %> items</span>
+        </div>
+      </div>
+      <div class="page-actions">
+        <a href="/cart" class="btn btn-outline-primary">Back to Cart</a>
+      </div>
+    </div>
+
     <div class="row g-4">
 
       <!-- Order Summary -->
@@ -35,7 +50,6 @@
           <div class="card-body">
             <div class="d-flex justify-content-between align-items-center mb-2">
               <h3 class="h5 mb-0">Order Summary</h3>
-              <a href="/cart" class="btn btn-link btn-sm">Back to Cart</a>
             </div>
             <hr>
 
@@ -251,10 +265,7 @@
 
               <div class="col-12">
                 <div class="d-flex align-items-center justify-content-between mb-2">
-                  <div class="text-muted small d-flex align-items-center gap-1">
-                    <span aria-hidden="true">🔒</span>
-                    <span>Secure checkout</span>
-                  </div>
+                  <div class="text-muted small">Secure checkout</div>
                   <div class="text-muted small">Encrypted payment</div>
                 </div>
                 <button type="submit" class="btn btn-success w-100 py-2">

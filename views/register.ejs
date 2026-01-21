@@ -10,7 +10,7 @@
   <!-- Custom CSS -->
   <link rel="stylesheet" href="/css/style.css">
 
-  <title>Register - Grow Mart/title>
+  <title>Register - Grow Mart</title>
 </head>
 
 <body class="page">
@@ -22,9 +22,12 @@
   ] }) %>
 
   <!-- Register Form -->
-  <div class="container mt-5" style="max-width: 550px;">
-
-    <h2 class="text-center mb-4">Create an Account</h2>
+  <div class="container page-shell auth-shell">
+    <div class="page-header page-header--center mb-4">
+      <p class="page-kicker">Account</p>
+      <h1 class="page-title">Create your account</h1>
+      <p class="page-subtitle">Join Grow Mart and start shopping.</p>
+    </div>
 
     <% if (messages && messages.length > 0) { %>
       <div class="alert alert-danger">

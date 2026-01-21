@@ -26,15 +26,18 @@
     }) %>
 
     <!-- Main Content -->
-    <div class="container mt-4">
-
-        <h2 class="text-center mb-4">Update Product</h2>
+    <div class="container page-shell">
+        <div class="page-header page-header--center mb-4">
+            <p class="page-kicker">Inventory</p>
+            <h1 class="page-title">Update Product</h1>
+            <p class="page-subtitle">Edit details, pricing, and inventory.</p>
+        </div>
 
         <% if (product) { %>
 
         <form action="/products/admin/edit/<%= product.id %>" 
               method="POST" enctype="multipart/form-data" 
-              class="mx-auto form-box" style="max-width: 550px;">
+              class="mx-auto form-box content-narrow">
 
             <!-- Product Name -->
             <div class="mb-3">

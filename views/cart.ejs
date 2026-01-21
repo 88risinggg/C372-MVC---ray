@@ -16,24 +16,27 @@
     ] 
   }) %>
 
-  <div class="container py-4">
-    <div class="d-flex align-items-center justify-content-between mb-3">
+  <div class="container page-shell">
+    <div class="page-header">
       <div>
-        <p class="text-muted mb-0 small">Signed in as</p>
-        <p class="fw-semibold mb-0"><%= user.username %> (<%= user.role %>)</p>
+        <p class="page-kicker">Cart</p>
+        <h1 class="page-title">Shopping Cart</h1>
+        <p class="page-subtitle">Review your items and checkout when ready.</p>
+        <div class="page-meta mt-2">
+          <span class="meta-pill">Signed in as <span class="fw-semibold"><%= user.username %> (<%= user.role %>)</span></span>
+        </div>
       </div>
-      <a href="/shopping" class="btn btn-outline-primary btn-sm">Continue Shopping</a>
+      <div class="page-actions">
+        <% if (items.length) { %>
+          <a class="btn btn-primary" href="/checkout">Proceed to Checkout</a>
+        <% } %>
+        <a href="/shopping" class="btn btn-outline-primary">Continue Shopping</a>
+      </div>
     </div>
 
     <div class="card glass">
       <div class="card-body">
-        <div class="d-flex align-items-center justify-content-between mb-3">
-          <h2 class="h4 mb-0">Shopping Cart</h2>
-
-          <% if (items.length) { %>
-            <a class="btn btn-primary" href="/checkout">Proceed to Checkout</a>
-          <% } %>
-        </div>
+        <h2 class="h4 mb-3">Items</h2>
 
         <% if (items.length === 0) { %>
           <div class="empty-state">

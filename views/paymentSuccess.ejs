@@ -27,31 +27,74 @@
   }) %>
 
   <!-- Main Content -->
-  <div class="container py-5">
+  <div class="container page-shell">
+    <section class="payment-hero payment-success">
+      <div class="payment-hero-main">
+        <div class="payment-icon" role="img" aria-label="Payment confirmed">
+          <svg viewBox="0 0 64 64" aria-hidden="true">
+            <circle cx="32" cy="32" r="30" stroke="currentColor" stroke-width="4" fill="none"></circle>
+            <path d="M18 33l9 9 19-20" stroke="currentColor" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"></path>
+          </svg>
+        </div>
 
-    <div class="card glass text-center p-4">
+        <p class="payment-kicker">Payment confirmed</p>
+        <h1 class="payment-title">Order placed successfully.</h1>
+        <p class="payment-subtitle">
+          Thank you, <%= user.username %>. Your simulated payment is complete and your order is now in the system.
+        </p>
 
-      <div class="display-6 mb-3">? Payment Successful</div>
+        <div class="order-chip">
+          <span>Order ID</span>
+          <strong>#<%= orderId %></strong>
+        </div>
 
-      <p class="lead mb-2">Thank you, <%= user.username %>!</p>
-      <p>Your simulated payment has been completed.</p>
+        <div class="action-row">
+          <a href="/orders/<%= orderId %>" class="btn btn-primary btn-lg">
+            View Order
+          </a>
 
-      <h4 class="mb-3">
-        Order ID: <span class="fw-bold"><%= orderId %></span>
-      </h4>
-
-      <div class="d-flex justify-content-center gap-3 mt-3">
-        <a href="/orders/<%= orderId %>" class="btn btn-primary">
-          View Order
-        </a>
-
-        <a href="/shopping" class="btn btn-outline-primary">
-          Continue Shopping
-        </a>
+          <a href="/shopping" class="btn btn-outline-primary btn-lg">
+            Continue Shopping
+          </a>
+        </div>
       </div>
 
-    </div>
+      <aside class="payment-hero-panel">
+        <div class="panel-card">
+          <h2 class="panel-title">What happens next</h2>
+          <ul class="next-steps">
+            <li>
+              <span class="step-index">1</span>
+              <div>
+                <h3>We are preparing your items</h3>
+                <p>Your order moves to the packing queue.</p>
+              </div>
+            </li>
+            <li>
+              <span class="step-index">2</span>
+              <div>
+                <h3>Status updates are ready</h3>
+                <p>Check "My Orders" anytime for progress.</p>
+              </div>
+            </li>
+            <li>
+              <span class="step-index">3</span>
+              <div>
+                <h3>Keep shopping</h3>
+                <p>Continue browsing while we prepare your order.</p>
+              </div>
+            </li>
+          </ul>
+        </div>
 
+        <div class="panel-card panel-muted">
+          <h2 class="panel-title">Need help?</h2>
+          <p class="panel-text">
+            Visit your order details page for receipts, updates, and support info.
+          </p>
+        </div>
+      </aside>
+    </section>
   </div>
 
 </body>

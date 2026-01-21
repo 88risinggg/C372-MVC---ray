@@ -20,9 +20,21 @@
   ] 
 }) %>
 
-<div class="container py-4">
-
-  <h2 class="fw-bold mb-4">Order Details (Admin)</h2>
+<div class="container page-shell">
+  <div class="page-header">
+    <div>
+      <p class="page-kicker">Admin</p>
+      <h1 class="page-title">Order #<%= order.id %></h1>
+      <p class="page-subtitle">Update fulfilment status and review order items.</p>
+      <div class="page-meta mt-2">
+        <span class="meta-pill">User <span class="fw-semibold"><%= order.username %></span></span>
+        <span class="meta-pill">Payment <span class="fw-semibold"><%= order.status %></span></span>
+      </div>
+    </div>
+    <div class="page-actions">
+      <a href="/admin/orders" class="btn btn-outline-primary">Back to Orders</a>
+    </div>
+  </div>
 
   <!-- Order Info Card -->
   <div class="card glass mb-4">
