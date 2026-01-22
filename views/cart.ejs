@@ -68,7 +68,7 @@
                       </div>
                     </td>
 
-                    <td>$<%= items[i].price.toFixed(2) %></td>
+                    <td>$<%= Number(items[i].price || 0).toFixed(2) %></td>
 
                     <td>
                       <form class="d-flex align-items-center gap-2" action="/cart/update/<%= items[i].id %>" method="POST">

@@ -98,13 +98,14 @@
               <!-- Price -->
               <td>
                 <% const hasDiscount = product.discount && product.discount > 0; %>
-                <% const finalPrice = hasDiscount ? product.price * (1 - product.discount / 100) : product.price; %>
+                <% const basePrice = Number(product.price || 0); %>
+                <% const finalPrice = hasDiscount ? basePrice * (1 - product.discount / 100) : basePrice; %>
                 <% if (hasDiscount) { %>
                   <div class="text-danger fw-semibold">$<%= finalPrice.toFixed(2) %></div>
-                  <div class="text-muted small text-decoration-line-through mb-1">$<%= product.price.toFixed(2) %></div>
+                  <div class="text-muted small text-decoration-line-through mb-1">$<%= basePrice.toFixed(2) %></div>
                   <span class="badge bg-danger">-<%= product.discount %>%</span>
                 <% } else { %>
-                  $<%= product.price.toFixed(2) %>
+                  $<%= basePrice.toFixed(2) %>
                 <% } %>
               </td>
 

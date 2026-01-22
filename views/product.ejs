@@ -63,11 +63,12 @@
                 <p><b>Name:</b><br> <%= product.productName %></p>
                 <p><b>Quantity:</b><br> <%= product.quantity %></p>
                 <% const hasDiscount = product.discount && product.discount > 0; %>
-                <% const finalPrice = hasDiscount ? product.price * (1 - product.discount / 100) : product.price; %>
+                <% const basePrice = Number(product.price || 0); %>
+                <% const finalPrice = hasDiscount ? basePrice * (1 - product.discount / 100) : basePrice; %>
                 <p><b>Price:</b><br>
                   <span class="fw-semibold">$<%= finalPrice.toFixed(2) %></span>
                   <% if (hasDiscount) { %>
-                    <span class="text-muted text-decoration-line-through ms-2">$<%= product.price.toFixed(2) %></span>
+                    <span class="text-muted text-decoration-line-through ms-2">$<%= basePrice.toFixed(2) %></span>
                     <span class="badge bg-danger ms-1">-<%= product.discount %>%</span>
                   <% } %>
                 </p>
