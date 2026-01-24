@@ -1,4 +1,4 @@
-let express, mysql, session, multer, fs, path, axios, dotenv, netsQr, paypal, airwallex;
+let express, mysql, session, multer, fs, path, axios, dotenv, netsQr, paypal;
 try {
     express = require("express");
     mysql = require("mysql2");
@@ -10,7 +10,6 @@ try {
     dotenv = require("dotenv");
     netsQr = require("./services/nets");
     paypal = require("./services/paypal");
-    airwallex = require("./services/airwallex");
 } catch (err) {
     console.error("A required dependency is missing:", err.message);
     console.error("Install dependencies with:");
@@ -564,43 +563,6 @@ app.post("/checkout", checkAuthenticated, (req, res) => {
         return res.redirect("/shopping");
     }
 
-    if (paymentMethod === "Airwallex Card") {
-        return validateStock(cart)
-            .then(() => {
-                const totals = calculateTotals(cart);
-                const baseUrl = `${req.protocol}://${req.get("host")}`;
-                req.session.pendingOrder = {
-                    provider: "airwallex",
-                    cart: cart.map(item => ({ ...item })),
-                    totals
-                };
-                return airwallex.createPaymentLink({
-                    amount: totals.total,
-                    currency: process.env.AIRWALLEX_CURRENCY || "SGD",
-                    returnUrl: `${baseUrl}/airwallex/success`,
-                    cancelUrl: `${baseUrl}/airwallex/cancel`,
-                    merchantOrderId: `order_${req.session.user.id}_${Date.now()}`
-                });
-            })
-            .then(({ url, paymentLinkId }) => {
-                if (req.session.pendingOrder) {
-                    req.session.pendingOrder.airwallex = {
-                        paymentLinkId
-                    };
-                }
-                return res.redirect(url);
-            })
-            .catch(err => {
-                if (err?.response?.data) {
-                    console.log("Airwallex error response:", err.response.data);
-                } else {
-                    console.log("Airwallex error:", err);
-                }
-                req.flash("error", "Airwallex setup failed. Please try again.");
-                return res.redirect("/checkout");
-            });
-    }
-
     if (paymentMethod === "PayPal") {
         return validateStock(cart)
             .then(() => {
@@ -657,72 +619,6 @@ app.post("/checkout", checkAuthenticated, (req, res) => {
             req.flash("error", "Order failed: " + err);
             res.redirect("/checkout");
         });
-});
-
-app.get("/airwallex/success", checkAuthenticated, (req, res) => {
-    const pending = req.session.pendingOrder;
-    const intentId =
-        req.query.payment_intent_id ||
-        req.query.payment_intent ||
-        req.query.intent_id ||
-        null;
-    const linkId =
-        req.query.payment_link_id ||
-        req.query.payment_link ||
-        pending?.airwallex?.paymentLinkId ||
-        null;
-    const status = (req.query.status || "").toString().toLowerCase();
-
-    if (!pending?.cart?.length || pending.provider !== "airwallex") {
-        req.flash("error", "No pending Airwallex order found.");
-        return res.redirect("/checkout");
-    }
-
-    const finalizeOrder = () => {
-        return createOrderFromCart(req.session.user.id, pending.cart)
-            .then(({ orderId, totals }) => {
-                req.session.cart = [];
-                req.session.pendingOrder = null;
-                res.render("paymentSuccess", {
-                    orderId,
-                    total: totals.total,
-                    user: req.session.user
-                });
-            });
-    };
-
-    const successStatuses = new Set(["succeeded", "success", "paid", "captured", "completed", "settled"]);
-
-    const verifyPromise = intentId
-        ? airwallex.getPaymentIntent(intentId)
-        : linkId
-            ? airwallex.getPaymentLink(linkId)
-            : Promise.resolve(null);
-
-    verifyPromise
-        .then(result => {
-            const remoteStatus = (result?.status || "").toString().toLowerCase();
-            if (successStatuses.has(remoteStatus)) {
-                return finalizeOrder();
-            }
-            if (status && successStatuses.has(status)) {
-                return finalizeOrder();
-            }
-            throw new Error("Airwallex payment not completed.");
-        })
-        .catch(err => {
-            console.log("Airwallex verify error:", err);
-            req.flash("error", "Airwallex payment not completed.");
-            return res.redirect("/checkout");
-        });
-});
-
-app.get("/airwallex/cancel", checkAuthenticated, (req, res) => {
-    req.session.pendingOrder = null;
-    res.render("airwallexFail", {
-        message: "Airwallex payment was cancelled.",
-        user: req.session.user
-    });
 });
 
 app.get("/paypal/success", checkAuthenticated, (req, res) => {

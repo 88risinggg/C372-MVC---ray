@@ -124,18 +124,6 @@
                 <div class="card border-0 shadow-sm">
                   <div class="card-body">
                     <div class="form-check">
-                      <input class="form-check-input" type="radio" name="paymentMethod" value="Airwallex Card" aria-label="Airwallex Card" id="pm-airwallex">
-                      <label class="form-check-label fw-semibold" for="pm-airwallex">Airwallex (Card)</label>
-                      <p class="small text-muted mb-0">Redirect to Airwallex hosted payment page</p>
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              <div class="col-12">
-                <div class="card border-0 shadow-sm">
-                  <div class="card-body">
-                    <div class="form-check">
                       <input class="form-check-input" type="radio" name="paymentMethod" value="PayPal" aria-label="PayPal" id="pm-paypal">
                       <label class="form-check-label fw-semibold" for="pm-paypal">PayPal</label>
                       <p class="small text-muted mb-0">Pay with your PayPal account</p>
@@ -225,13 +213,6 @@
                   </div>
                 </div>
 
-                <div id="airwallex-section" class="card border-0 shadow-sm d-none">
-                  <div class="card-body text-center">
-                    <h6 class="fw-semibold mb-3">Airwallex</h6>
-                    <p class="small text-muted mb-0">You will be redirected to Airwallex to enter your card details.</p>
-                  </div>
-                </div>
-
                 <div id="paypal-section" class="card border-0 shadow-sm d-none">
                   <div class="card-body text-center">
                     <h6 class="fw-semibold mb-3">PayPal</h6>
@@ -285,7 +266,6 @@
   <script>
     const methodRadios = document.querySelectorAll('input[name="paymentMethod"]');
     const cardSection = document.getElementById("card-section");
-    const airwallexSection = document.getElementById("airwallex-section");
     const paypalSection = document.getElementById("paypal-section");
     const paynowSection = document.getElementById("paynow-section");
     const grabpaySection = document.getElementById("grabpay-section");
@@ -298,7 +278,7 @@
     const cardCvv = document.getElementById("cardCvv");
 
     const showOnly = (section) => {
-      [cardSection, airwallexSection, paypalSection, paynowSection, grabpaySection, netsSection].forEach(block => {
+      [cardSection, paypalSection, paynowSection, grabpaySection, netsSection].forEach(block => {
         if (!block) return;
         if (section && block === section) {
           block.classList.remove("d-none");
@@ -334,9 +314,6 @@
           break;
         case "PayPal":
           showOnly(paypalSection);
-          break;
-        case "Airwallex Card":
-          showOnly(airwallexSection);
           break;
         default: // Credit card or fallback
           showOnly(cardSection);
