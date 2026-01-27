@@ -69,6 +69,7 @@
                 <th>Date</th>
                 <th>Total</th>
                 <th>Status</th>
+                <th>Refund</th>
                 <th></th>
               </tr>
             </thead>
@@ -86,9 +87,17 @@
                     <span class="
                       status-badge
                       <%= order.orderStatus === 'Completed' ? 'status-completed' :
-                          order.orderStatus === 'Delivering' ? 'status-delivering' : 
+                          (order.orderStatus === 'Out for delivery' || order.orderStatus === 'Delivering') ? 'status-delivering' :
                           'status-preparing' %>">
-                      <%= order.orderStatus %>
+                      <%= order.orderStatus || "Preparing" %>
+                    </span>
+                  </td>
+
+                  <td>
+                    <span class="
+                      status-badge
+                      <%= order.refund_status === 'Refunded' ? 'status-danger' : 'status-pending' %>">
+                      <%= order.refund_status || "Not refunded" %>
                     </span>
                   </td>
 

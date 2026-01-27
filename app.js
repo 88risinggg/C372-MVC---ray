@@ -1,4 +1,4 @@
-let express, mysql, session, multer, fs, path, axios, dotenv, netsQr, paypal;
+let express, mysql, session, multer, fs, path, axios, dotenv, netsQr, paypal, stripePayments;
 try {
     express = require("express");
     mysql = require("mysql2");
@@ -10,6 +10,7 @@ try {
     dotenv = require("dotenv");
     netsQr = require("./services/nets");
     paypal = require("./services/paypal");
+    stripePayments = require("./services/stripe");
 } catch (err) {
     console.error("A required dependency is missing:", err.message);
     console.error("Install dependencies with:");
@@ -227,6 +228,48 @@ const calculateTotals = (items = []) => {
     return { subtotal, deliveryFee, gst, total };
 };
 
+const getWalletBalance = (userId) => {
+    return new Promise((resolve, reject) => {
+        connection.query(
+            "SELECT wallet_balance FROM users WHERE id = ?",
+            [userId],
+            (err, rows) => {
+                if (err) return reject(err);
+                const balance = Number(rows[0]?.wallet_balance || 0);
+                resolve(balance);
+            }
+        );
+    });
+};
+
+const adjustWalletBalance = (userId, amountDelta) => {
+    return new Promise((resolve, reject) => {
+        connection.query(
+            "UPDATE users SET wallet_balance = wallet_balance + ? WHERE id = ?",
+            [amountDelta, userId],
+            (err) => {
+                if (err) return reject(err);
+                resolve();
+            }
+        );
+    });
+};
+
+const normalizePaymentMethod = (value) => {
+    const raw = (value || "").trim();
+    const allowed = [
+        "Stripe",
+        "Wallet",
+        "PayPal",
+        "NETS QR",
+        "PayNow",
+        "GrabPay",
+        "Cash on Delivery"
+    ];
+    if (allowed.includes(raw)) return raw;
+    return raw ? "Other" : "Unknown";
+};
+
 const validateStock = (cart = []) => {
     const stockChecks = cart.map(item => {
         return new Promise((resolve, reject) => {
@@ -247,12 +290,13 @@ const validateStock = (cart = []) => {
     return Promise.all(stockChecks);
 };
 
-const createOrderFromCart = (userId, cart = []) => {
+const createOrderFromCart = (userId, cart = [], paymentMethod) => {
     return new Promise((resolve, reject) => {
         const totals = calculateTotals(cart);
+        const method = normalizePaymentMethod(paymentMethod);
         connection.query(
-            "INSERT INTO orders (user_id, total) VALUES (?, ?)",
-            [userId, totals.total],
+            "INSERT INTO orders (user_id, total, payment_method, orderStatus) VALUES (?, ?, ?, ?)",
+            [userId, totals.total, method, "Preparing"],
             (err, orderResult) => {
                 if (err) return reject(err);
 
@@ -445,11 +489,17 @@ app.get("/admin/orders/:id", checkAuthenticated, checkAdmin, (req, res) => {
 
 // ADMIN: Update order status
 app.post("/admin/orders/:id/status", checkAuthenticated, checkAdmin, (req, res) => {
-    const { orderStatus } = req.body;
+    const rawStatus = (req.body.orderStatus || "").trim();
+    const mappedStatus = rawStatus === "Delivering" ? "Out for delivery" : rawStatus;
+    const allowedStatuses = ["Preparing", "Out for delivery", "Completed"];
+
+    if (!allowedStatuses.includes(mappedStatus)) {
+        return res.redirect(`/admin/orders/${req.params.id}`);
+    }
 
     connection.query(
         "UPDATE orders SET orderStatus = ? WHERE id = ?",
-        [orderStatus, req.params.id],
+        [mappedStatus, req.params.id],
         (err) => {
             if (err) throw err;
             res.redirect(`/admin/orders/${req.params.id}`);
@@ -482,6 +532,89 @@ app.get("/product/:id", checkAuthenticated, (req, res) => {
 app.get('/cart', checkAuthenticated, (req, res) => {
     const items = req.session.cart || [];
     res.render('cart', { items, user: req.session.user });
+});
+
+// ADMIN: Refund order (wallet only credits; others mark refunded)
+app.post("/admin/orders/:id/refund", checkAuthenticated, checkAdmin, (req, res) => {
+    const orderId = req.params.id;
+    connection.query(
+        `SELECT orders.id, orders.total, orders.payment_method, orders.refund_status, orders.user_id
+         FROM orders
+         WHERE orders.id = ?`,
+        [orderId],
+        (err, rows) => {
+            if (err) throw err;
+            const order = rows[0];
+            if (!order) return res.redirect("/admin/orders");
+            if (order.refund_status === "Refunded") {
+                return res.redirect(`/admin/orders/${orderId}`);
+            }
+
+            const total = Number(order.total || 0);
+            const finalizeRefund = () => {
+                connection.query(
+                    "UPDATE orders SET refund_status = ?, refunded_at = NOW() WHERE id = ?",
+                    ["Refunded", orderId],
+                    (err2) => {
+                        if (err2) throw err2;
+                        res.redirect(`/admin/orders/${orderId}`);
+                    }
+                );
+            };
+
+            if (order.payment_method === "Wallet") {
+                adjustWalletBalance(order.user_id, total)
+                    .then(finalizeRefund)
+                    .catch(err3 => {
+                        console.error("Wallet refund error:", err3);
+                        res.redirect(`/admin/orders/${orderId}`);
+                    });
+            } else {
+                finalizeRefund();
+            }
+        }
+    );
+});
+
+// Wallet page
+app.get("/wallet", checkAuthenticated, (req, res) => {
+    getWalletBalance(req.session.user.id)
+        .then(balance => {
+            req.session.user.wallet_balance = balance;
+            res.render("wallet", {
+                user: req.session.user,
+                balance,
+                success: req.flash("success"),
+                errors: req.flash("error")
+            });
+        })
+        .catch(err => {
+            console.error("Wallet fetch error:", err);
+            req.flash("error", "Could not load wallet balance.");
+            res.redirect("/shopping");
+        });
+});
+
+// Wallet top-up
+app.post("/wallet/topup", checkAuthenticated, (req, res) => {
+    const amount = Number(req.body.amount || 0);
+    if (!Number.isFinite(amount) || amount <= 0) {
+        req.flash("error", "Please enter a valid top-up amount.");
+        return res.redirect("/wallet");
+    }
+
+    adjustWalletBalance(req.session.user.id, amount)
+        .then(() => getWalletBalance(req.session.user.id))
+        .then(balance => {
+            req.session.user.wallet_balance = balance;
+            req.flash("success", `Wallet topped up by $${amount.toFixed(2)}.`);
+            res.redirect("/wallet");
+        })
+        .catch(err => {
+            console.error("Wallet top-up error:", err);
+            req.flash("error", "Top-up failed. Please try again.");
+            res.redirect("/wallet");
+        });
 });
 
 
@@ -542,25 +675,107 @@ app.get("/checkout", checkAuthenticated, (req, res) => {
 
     const totals = calculateTotals(items);
 
-    res.render("checkout", {
-        items,         // <<< FIXED
-        subtotal: totals.subtotal,
-        deliveryFee: totals.deliveryFee,
-        gst: totals.gst,
-        total: totals.total,
-        user: req.session.user,
-        errors: req.flash("error")
-    });
+    getWalletBalance(req.session.user.id)
+        .then(balance => {
+            req.session.user.wallet_balance = balance;
+            res.render("checkout", {
+                items,         // <<< FIXED
+                subtotal: totals.subtotal,
+                deliveryFee: totals.deliveryFee,
+                gst: totals.gst,
+                total: totals.total,
+                walletBalance: balance,
+                user: req.session.user,
+                errors: req.flash("error")
+            });
+        })
+        .catch(err => {
+            console.error("Wallet fetch error:", err);
+            res.render("checkout", {
+                items,
+                subtotal: totals.subtotal,
+                deliveryFee: totals.deliveryFee,
+                gst: totals.gst,
+                total: totals.total,
+                walletBalance: 0,
+                user: req.session.user,
+                errors: req.flash("error")
+            });
+        });
 });
 
 // Submit checkout
 app.post("/checkout", checkAuthenticated, (req, res) => {
     const cart = req.session.cart || [];
     const paymentMethod = (req.body.paymentMethod || "").trim();
+    const normalizedPaymentMethod = normalizePaymentMethod(paymentMethod);
+    const userId = req.session.user.id;
 
     if (!cart.length) {
         req.flash("error", "Your cart is empty.");
         return res.redirect("/shopping");
+    }
+
+    if (paymentMethod === "Wallet") {
+        const totals = calculateTotals(cart);
+        let deducted = false;
+        return validateStock(cart)
+            .then(() => getWalletBalance(userId))
+            .then(balance => {
+                if (balance < totals.total) {
+                    throw new Error("Insufficient wallet balance.");
+                }
+                return adjustWalletBalance(userId, -totals.total).then(() => {
+                    deducted = true;
+                    req.session.user.wallet_balance = balance - totals.total;
+                });
+            })
+            .then(() => createOrderFromCart(userId, cart, normalizedPaymentMethod))
+            .then(({ orderId, totals: createdTotals }) => {
+                req.session.cart = [];
+                res.render("paymentSuccess", {
+                    orderId,
+                    total: createdTotals.total,
+                    user: req.session.user
+                });
+            })
+            .catch(err => {
+                if (deducted) {
+                    adjustWalletBalance(userId, totals.total).catch(() => {});
+                }
+                console.log("Wallet payment error:", err);
+                req.flash("error", err.message || "Wallet payment failed. Please try again.");
+                return res.redirect("/checkout");
+            });
+    }
+
+    if (paymentMethod === "Stripe") {
+        return validateStock(cart)
+            .then(() => {
+                const totals = calculateTotals(cart);
+                const baseUrl = `${req.protocol}://${req.get("host")}`;
+                req.session.pendingOrder = {
+                    provider: "stripe",
+                    cart: cart.map(item => ({ ...item })),
+                    totals,
+                    paymentMethod: normalizedPaymentMethod
+                };
+                return stripePayments.createCheckoutSession({
+                    items: cart,
+                    totals,
+                    baseUrl,
+                    customerEmail: req.session.user?.email
+                });
+            })
+            .then(session => {
+                req.session.pendingOrder.sessionId = session.id;
+                return res.redirect(session.url);
+            })
+            .catch(err => {
+                console.log("Stripe error:", err);
+                req.flash("error", "Stripe setup failed. Please try again.");
+                return res.redirect("/checkout");
+            });
     }
 
     if (paymentMethod === "PayPal") {
@@ -571,7 +786,8 @@ app.post("/checkout", checkAuthenticated, (req, res) => {
                 req.session.pendingOrder = {
                     provider: "paypal",
                     cart: cart.map(item => ({ ...item })),
-                    totals
+                    totals,
+                    paymentMethod: normalizedPaymentMethod
                 };
                 return paypal.createOrder(
                     totals.total,
@@ -594,7 +810,8 @@ app.post("/checkout", checkAuthenticated, (req, res) => {
                 req.session.pendingOrder = {
                     provider: "nets",
                     cart: cart.map(item => ({ ...item })),
-                    totals
+                    totals,
+                    paymentMethod: normalizedPaymentMethod
                 };
                 return netsQr.generateQrCode(req, res, totals.total);
             })
@@ -605,7 +822,7 @@ app.post("/checkout", checkAuthenticated, (req, res) => {
     }
 
     validateStock(cart)
-        .then(() => createOrderFromCart(req.session.user.id, cart))
+        .then(() => createOrderFromCart(req.session.user.id, cart, normalizedPaymentMethod))
         .then(({ orderId, totals }) => {
             req.session.cart = [];
             res.render("paymentSuccess", {
@@ -640,7 +857,7 @@ app.get("/paypal/success", checkAuthenticated, (req, res) => {
             if (capture?.status !== "COMPLETED") {
                 throw new Error("PayPal capture not completed.");
             }
-            return createOrderFromCart(req.session.user.id, pending.cart);
+            return createOrderFromCart(req.session.user.id, pending.cart, pending.paymentMethod);
         })
         .then(({ orderId: internalOrderId, totals }) => {
             req.session.cart = [];
@@ -666,6 +883,52 @@ app.get("/paypal/cancel", checkAuthenticated, (req, res) => {
     });
 });
 
+app.get("/stripe/success", checkAuthenticated, async (req, res) => {
+    const pending = req.session.pendingOrder;
+    const sessionId = req.query.session_id;
+
+    if (!pending?.cart?.length || pending.provider !== "stripe") {
+        req.flash("error", "No pending Stripe order found.");
+        return res.redirect("/checkout");
+    }
+
+    if (!sessionId) {
+        req.flash("error", "Missing Stripe session ID.");
+        return res.redirect("/checkout");
+    }
+
+    try {
+        if (pending.sessionId && pending.sessionId !== sessionId) {
+            throw new Error("Stripe session mismatch.");
+        }
+        const session = await stripePayments.retrieveSession(sessionId);
+        if (session?.payment_status !== "paid") {
+            throw new Error("Stripe payment not completed.");
+        }
+
+        const { orderId, totals } = await createOrderFromCart(req.session.user.id, pending.cart, pending.paymentMethod);
+        req.session.cart = [];
+        req.session.pendingOrder = null;
+        res.render("paymentSuccess", {
+            orderId,
+            total: totals.total,
+            user: req.session.user
+        });
+    } catch (err) {
+        console.log("Stripe capture error:", err);
+        req.flash("error", "Stripe payment failed. Please try again.");
+        res.redirect("/checkout");
+    }
+});
+
+app.get("/stripe/cancel", checkAuthenticated, (req, res) => {
+    req.session.pendingOrder = null;
+    res.render("paypalFail", {
+        message: "Stripe payment was cancelled.",
+        user: req.session.user
+    });
+});
+
 app.get("/nets-qr/success", checkAuthenticated, (req, res) => {
     const pending = req.session.pendingOrder;
     if (!pending?.cart?.length || pending.provider !== "nets") {
@@ -673,7 +936,7 @@ app.get("/nets-qr/success", checkAuthenticated, (req, res) => {
         return res.redirect("/checkout");
     }
 
-    createOrderFromCart(req.session.user.id, pending.cart)
+    createOrderFromCart(req.session.user.id, pending.cart, pending.paymentMethod)
         .then(({ orderId, totals }) => {
             req.session.cart = [];
             req.session.pendingOrder = null;

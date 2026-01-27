@@ -41,6 +41,7 @@
           <th>Total ($)</th>
           <th>Payment</th>
           <th>Status</th>
+          <th>Refund</th>
           <th>Date</th>
           <th>View</th>
         </tr>
@@ -55,10 +56,21 @@
           <!-- FIXED: Safe numeric formatting -->
           <td>$<%= Number(order.total).toFixed(2) %></td>
 
-          <td><%= order.paymentType %></td>
+          <td><%= order.payment_method || "Unknown" %></td>
 
           <td>
-            <span class="chip <%= order.status === 'Paid' ? 'success' : 'warn' %>"><%= order.status %></span>
+            <span class="chip
+              <%= order.orderStatus === 'Completed' ? 'success' :
+                  (order.orderStatus === 'Out for delivery' || order.orderStatus === 'Delivering') ? 'info' :
+                  'warn' %>">
+              <%= order.orderStatus || "Preparing" %>
+            </span>
+          </td>
+
+          <td>
+            <span class="chip <%= order.refund_status === 'Refunded' ? 'danger' : 'info' %>">
+              <%= order.refund_status || "Not refunded" %>
+            </span>
           </td>
 
           <!-- FIXED: Convert SQL string into a readable date -->
