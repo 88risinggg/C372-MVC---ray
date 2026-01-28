@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8">
@@ -19,16 +19,16 @@
   <%- include("partial/navbar", { 
     user, 
     brandHref: "/shopping", 
-    brandLabel: "Supermarket App", 
     navLinks: [
       { href: "/shopping", label: "Shop" },
+      { href: "/wallet", label: "Wallet" },
       { href: "/orders", label: "My Orders" }
     ] 
   }) %>
 
   <!-- Main Content -->
   <div class="container page-shell">
-    <section class="payment-hero payment-success">
+    <section class="payment-hero payment-success reveal">
       <div class="payment-hero-main">
         <div class="payment-icon" role="img" aria-label="Payment confirmed">
           <svg viewBox="0 0 64 64" aria-hidden="true">
@@ -97,5 +97,6 @@
     </section>
   </div>
 
-</body>
+<script src="/js/site.js"></script>`n</body>
 </html>
+

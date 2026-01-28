@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8">
@@ -13,18 +13,19 @@
 <body class="page">
 
 <!-- NAVBAR -->
-<%- include("partial/navbar", { 
+  <%- include("partial/navbar", { 
   user, 
   brandHref: "/shopping", 
   navLinks: [
     { href: "/shopping", label: "Shop" },
+    { href: "/wallet", label: "Wallet" },
     { href: "/orders", label: "My Orders" }
   ] 
 }) %>
 
 
 <div class="container page-shell">
-  <div class="page-header">
+  <div class="page-header reveal">
     <div>
       <p class="page-kicker">Order</p>
       <h1 class="page-title">Order #<%= order.id %></h1>
@@ -46,7 +47,7 @@
 
 
   <!-- ORDER INFO CARD -->
-  <div class="card glass mb-4">
+  <div class="card glass mb-4 reveal">
     <div class="card-body row g-3">
 
       <div class="col-md-3">
@@ -88,44 +89,95 @@
   </div>
 
 
-  <!-- ORDER ITEMS CARD -->
-  <div class="card glass">
-    <div class="card-body">
+  <% const subtotal = (items || []).reduce((sum, item) => sum + (Number(item.price) || 0) * (Number(item.quantity) || 0), 0); %>
+  <% const deliveryFee = subtotal > 50 ? 0 : 2; %>
+  <% const taxable = subtotal + deliveryFee; %>
+  <% const gst = Math.round(taxable * 0.09 * 100) / 100; %>
+  <% const computedTotal = Math.round((taxable + gst) * 100) / 100; %>
 
-      <h3 class="h5 fw-bold mb-3">Items</h3>
+  <div class="row g-4">
+    <!-- ORDER ITEMS CARD -->
+    <div class="col-lg-8">
+      <div class="card glass reveal h-100">
+        <div class="card-body">
 
-      <div class="table-responsive">
-        <table class="table align-middle">
-          <thead>
-            <tr>
-              <th>Product</th>
-              <th width="120">Price</th>
-              <th width="120">Qty</th>
-              <th width="140">Subtotal</th>
-            </tr>
-          </thead>
+          <h3 class="h5 fw-bold mb-3">Items</h3>
 
-          <tbody>
-            <% items.forEach(item => { %>
-            <tr>
-              <td>
-                <div class="d-flex align-items-center">
-                  <img src="/images/<%= item.image %>" width="70"
-                       class="rounded shadow-sm me-3"
-                       alt="<%= item.productName %>">
-                  <div class="fw-semibold"><%= item.productName %></div>
-                </div>
-              </td>
+          <div class="table-responsive">
+            <table class="table align-middle">
+              <thead>
+                <tr>
+                  <th>Product</th>
+                  <th width="120">Price</th>
+                  <th width="120">Qty</th>
+                  <th width="140">Subtotal</th>
+                </tr>
+              </thead>
 
-              <td>$<%= Number(item.price).toFixed(2) %></td>
-              <td><%= item.quantity %></td>
-              <td>$<%= (item.price * item.quantity).toFixed(2) %></td>
-            </tr>
-            <% }) %>
-          </tbody>
-        </table>
+              <tbody>
+                <% items.forEach(item => { %>
+                <tr>
+                  <td>
+                    <div class="d-flex align-items-center">
+                      <img src="/images/<%= item.image %>" width="70"
+                           class="rounded shadow-sm me-3"
+                           alt="<%= item.productName %>">
+                      <div class="fw-semibold"><%= item.productName %></div>
+                    </div>
+                  </td>
+
+                  <td>$<%= Number(item.price).toFixed(2) %></td>
+                  <td><%= item.quantity %></td>
+                  <td>$<%= (item.price * item.quantity).toFixed(2) %></td>
+                </tr>
+                <% }) %>
+              </tbody>
+            </table>
+          </div>
+
+        </div>
       </div>
+    </div>
 
+    <!-- INVOICE SUMMARY -->
+    <div class="col-lg-4">
+      <div class="card glass reveal h-100">
+        <div class="card-body">
+          <h3 class="h5 fw-bold mb-3">Invoice summary</h3>
+
+          <div class="d-flex justify-content-between mb-2">
+            <span class="text-muted">Items subtotal</span>
+            <span class="fw-semibold">$<%= subtotal.toFixed(2) %></span>
+          </div>
+          <div class="d-flex justify-content-between mb-2">
+            <span class="text-muted">Delivery fee</span>
+            <span class="fw-semibold">
+              <% if (deliveryFee === 0) { %>
+                <span class="text-success">Free</span>
+              <% } else { %>
+                $<%= deliveryFee.toFixed(2) %>
+              <% } %>
+            </span>
+          </div>
+          <div class="d-flex justify-content-between mb-3">
+            <span class="text-muted">GST (9%)</span>
+            <span class="fw-semibold">$<%= gst.toFixed(2) %></span>
+          </div>
+
+          <hr>
+
+          <div class="d-flex justify-content-between align-items-center mb-2">
+            <span class="fw-semibold">Total</span>
+            <span class="h5 fw-bold mb-0">$<%= computedTotal.toFixed(2) %></span>
+          </div>
+          <p class="text-muted small mb-3">Charged total: $<%= Number(order.total || 0).toFixed(2) %></p>
+
+          <div class="d-grid gap-2">
+            <a href="/shopping" class="btn btn-outline-primary">Continue Shopping</a>
+            <a href="/orders" class="btn btn-primary">Back to Orders</a>
+          </div>
+        </div>
+      </div>
     </div>
   </div>
 
@@ -134,5 +186,6 @@
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 
-</body>
+<script src="/js/site.js"></script>`n</body>
 </html>
+

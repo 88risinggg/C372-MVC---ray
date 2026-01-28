@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8">
@@ -12,6 +12,8 @@
     brandHref: "/", 
     navLinks: [
       { href: "/shopping", label: "Shop" },
+      { href: "/wallet", label: "Wallet" },
+      { href: "/cart", label: "Cart", active: true },
       { href: "/orders", label: "My Orders" }
     ] 
   }) %>
@@ -34,78 +36,98 @@
       </div>
     </div>
 
-    <div class="card glass">
-      <div class="card-body">
-        <h2 class="h4 mb-3">Items</h2>
-
-        <% if (items.length === 0) { %>
-          <div class="empty-state">
-            <p class="mb-0">Your cart is empty.</p>
-            <a href="/shopping" class="btn btn-link ps-0">Browse products</a>
-          </div>
-        <% } else { %>
-          <div class="table-responsive">
-            <table class="table align-middle">
-              <thead>
-                <tr>
-                  <th>Product</th>
-                  <th width="140">Price</th>
-                  <th width="180">Quantity</th>
-                  <th width="140">Total</th>
-                  <th width="120"></th>
-                </tr>
-              </thead>
-              <tbody>
-                <% let total = 0; %>
-                <% for (let i = 0; i < items.length; i++) { %>
-                  <tr>
-                    <td>
-                      <div class="d-flex align-items-center">
-                        <img src="/images/<%= items[i].image %>" width="70" class="rounded me-3 shadow-sm" alt="<%= items[i].productName %>">
-                        <div>
-                          <div class="fw-semibold"><%= items[i].productName %></div>
-                        </div>
-                      </div>
-                    </td>
-
-                    <td>$<%= Number(items[i].price || 0).toFixed(2) %></td>
-
-                    <td>
-                      <form class="d-flex align-items-center gap-2" action="/cart/update/<%= items[i].id %>" method="POST">
-                        <input 
-                          type="number" 
-                          class="form-control form-control-sm w-50" 
-                          name="quantity" 
-                          min="1" 
-                          value="<%= items[i].quantity %>"
-                        >
-                        <button type="submit" class="btn btn-outline-secondary btn-sm">Update</button>
-                      </form>
-                    </td>
-
-                    <td>$<%= (items[i].price * items[i].quantity).toFixed(2) %></td>
-
-                    <td>
-                      <form action="/cart/remove/<%= items[i].id %>" method="POST">
-                        <button type="submit" class="btn btn-link text-danger btn-sm">Remove</button>
-                      </form>
-                    </td>
-                  </tr>
-
-                  <% total += items[i].price * items[i].quantity; %>
-                <% } %>
-              </tbody>
-            </table>
-          </div>
-
-          <div class="d-flex align-items-center justify-content-between pt-2">
-            <h4 class="mb-0">Total: $<%= total.toFixed(2) %></h4>
-            <a class="btn btn-primary" href="/checkout">Proceed to Checkout</a>
-          </div>
-        <% } %>
-
+    <% if (items.length === 0) { %>
+      <div class="card glass reveal">
+        <div class="card-body text-center">
+          <h2 class="h4 mb-2">Your cart is empty</h2>
+          <p class="text-muted mb-3">Browse the market and add fresh items to your basket.</p>
+          <a href="/shopping" class="btn btn-primary">Browse products</a>
+        </div>
       </div>
-    </div>
+    <% } else { %>
+      <% let total = 0; %>
+      <div class="row g-4 reveal">
+        <div class="col-lg-8">
+          <div class="card glass h-100">
+            <div class="card-body">
+              <h2 class="h4 mb-3">Items</h2>
+              <div class="table-responsive">
+                <table class="table align-middle">
+                  <thead>
+                    <tr>
+                      <th>Product</th>
+                      <th width="140">Price</th>
+                      <th width="180">Quantity</th>
+                      <th width="140">Total</th>
+                      <th width="120"></th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <% for (let i = 0; i < items.length; i++) { %>
+                      <tr>
+                        <td>
+                          <div class="d-flex align-items-center">
+                            <img src="/images/<%= items[i].image %>" width="70" class="rounded me-3 shadow-sm" alt="<%= items[i].productName %>">
+                            <div>
+                              <div class="fw-semibold"><%= items[i].productName %></div>
+                            </div>
+                          </div>
+                        </td>
+
+                        <td>$<%= Number(items[i].price || 0).toFixed(2) %></td>
+
+                        <td>
+                          <form class="d-flex align-items-center gap-2" action="/cart/update/<%= items[i].id %>" method="POST">
+                            <input 
+                              type="number" 
+                              class="form-control form-control-sm w-50" 
+                              name="quantity" 
+                              min="1" 
+                              value="<%= items[i].quantity %>"
+                            >
+                            <button type="submit" class="btn btn-outline-secondary btn-sm">Update</button>
+                          </form>
+                        </td>
+
+                        <td>$<%= (items[i].price * items[i].quantity).toFixed(2) %></td>
+
+                        <td>
+                          <form action="/cart/remove/<%= items[i].id %>" method="POST">
+                            <button type="submit" class="btn btn-link text-danger btn-sm">Remove</button>
+                          </form>
+                        </td>
+                      </tr>
+
+                      <% total += items[i].price * items[i].quantity; %>
+                    <% } %>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="col-lg-4">
+          <div class="card glass h-100">
+            <div class="card-body">
+              <h3 class="h5 mb-3">Order summary</h3>
+              <div class="d-flex justify-content-between mb-2">
+                <span class="text-muted">Items</span>
+                <span class="fw-semibold"><%= items.length %></span>
+              </div>
+              <div class="d-flex justify-content-between mb-2">
+                <span class="text-muted">Estimated total</span>
+                <span class="fw-semibold">$<%= total.toFixed(2) %></span>
+              </div>
+              <p class="text-muted small mb-3">Delivery and GST will be calculated at checkout.</p>
+              <a class="btn btn-primary w-100 mb-2" href="/checkout">Proceed to Checkout</a>
+              <a href="/shopping" class="btn btn-outline-primary w-100">Continue Shopping</a>
+            </div>
+          </div>
+        </div>
+      </div>
+    <% } %>
   </div>
-</body>
+<script src="/js/site.js"></script>`n</body>
 </html>
+

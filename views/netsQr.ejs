@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -16,6 +16,7 @@
         brandHref: "/shopping", 
         navLinks: [
           { href: "/shopping", label: "Shop" },
+          { href: "/wallet", label: "Wallet" },
           { href: "/orders", label: "My Orders" }
         ] 
     }) %>
@@ -27,7 +28,7 @@
             <p class="page-subtitle">Use your banking app to complete the payment.</p>
         </div>
         <div class="row justify-content-center">
-            <div class="col-lg-6">
+            <div class="col-lg-6 reveal">
                 <div class="card glass shadow-sm">
                     <div class="card-body text-center">
                         <h1 class="h4 mb-2">Scan the QR Code</h1>
@@ -105,6 +106,7 @@
         const timerInterval = setInterval(updateTimer, 1000);
         updateTimer();
     </script>
-</body>
+<script src="/js/site.js"></script>`n</body>
 
 </html>
+

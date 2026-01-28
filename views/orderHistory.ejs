@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8">
@@ -16,11 +16,12 @@
 <body class="page">
 
 <!-- NAVBAR -->
-<%- include("partial/navbar", { 
+  <%- include("partial/navbar", { 
   user, 
   brandHref: "/shopping", 
   navLinks: [
     { href: "/shopping", label: "Shop" },
+    { href: "/wallet", label: "Wallet" },
     { href: "/cart", label: "Cart" }
   ] 
 }) %>
@@ -41,13 +42,32 @@
     </div>
   </div>
 
+  <% const totalOrders = orders?.length || 0; %>
+  <% const completedOrders = (orders || []).filter(o => o.orderStatus === "Completed").length; %>
+  <% const activeOrders = (orders || []).filter(o => o.orderStatus === "Preparing" || o.orderStatus === "Out for delivery" || o.orderStatus === "Delivering").length; %>
+
+  <div class="triple-grid my-4 reveal">
+    <div class="kpi-card">
+      <div class="kpi-label">Total orders</div>
+      <div class="kpi-value"><%= totalOrders %></div>
+    </div>
+    <div class="kpi-card">
+      <div class="kpi-label">Active</div>
+      <div class="kpi-value"><%= activeOrders %></div>
+    </div>
+    <div class="kpi-card">
+      <div class="kpi-label">Completed</div>
+      <div class="kpi-value"><%= completedOrders %></div>
+    </div>
+  </div>
+
   <!-- Errors -->
   <% if (errors && errors.length) { %>
     <div class="alert alert-warning"><%= errors[0] %></div>
   <% } %>
 
   <!-- Main Card -->
-  <div class="card glass">
+  <div class="card glass reveal">
     <div class="card-body">
 
       <h2 class="h4 mb-3">Past Orders</h2>
@@ -123,5 +143,6 @@
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 
-</body>
+<script src="/js/site.js"></script>`n</body>
 </html>
+

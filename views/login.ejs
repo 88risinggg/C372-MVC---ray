@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8">
@@ -23,31 +23,61 @@
 
   <!-- Login Form -->
   <div class="container page-shell auth-shell">
-    <div class="page-header page-header--center mb-4">
-      <p class="page-kicker">Account</p>
-      <h1 class="page-title">Welcome back</h1>
-      <p class="page-subtitle">Sign in to continue shopping.</p>
-    </div>
-
-    <!-- Error Messages -->
-    <% if (errors && errors.length > 0) { %>
-      <div class="alert alert-danger">
-        <% errors.forEach(err => { %>
-          <p class="mb-0"><%= err %></p>
-        <% }) %>
+    <div class="auth-split reveal">
+      <div class="auth-panel">
+        <h2>Welcome back</h2>
+        <p>Sign in to keep shopping fresh picks, manage your wallet, and track deliveries.</p>
+        <div class="hero-steps">
+          <div class="hero-step">
+            <span>1</span>
+            <div>
+              <h3>Shop smarter</h3>
+              <p>Curated weekly specials.</p>
+            </div>
+          </div>
+          <div class="hero-step">
+            <span>2</span>
+            <div>
+              <h3>Pay your way</h3>
+              <p>Wallet, card, or QR.</p>
+            </div>
+          </div>
+          <div class="hero-step">
+            <span>3</span>
+            <div>
+              <h3>Track orders</h3>
+              <p>Live updates every step.</p>
+            </div>
+          </div>
+        </div>
       </div>
-    <% } %>
 
-    <!-- Success Messages -->
-    <% if (messages && messages.length > 0) { %>
-      <div class="alert alert-success">
-        <% messages.forEach(msg => { %>
-          <p class="mb-0"><%= msg %></p>
-        <% }) %>
-      </div>
-    <% } %>
+      <div>
+        <div class="page-header page-header--center mb-4">
+          <p class="page-kicker">Account</p>
+          <h1 class="page-title">Sign in</h1>
+          <p class="page-subtitle">Access your Grow Mart account.</p>
+        </div>
 
-    <form action="/login" method="POST" class="form-box">
+        <!-- Error Messages -->
+        <% if (errors && errors.length > 0) { %>
+          <div class="alert alert-danger">
+            <% errors.forEach(err => { %>
+              <p class="mb-0"><%= err %></p>
+            <% }) %>
+          </div>
+        <% } %>
+
+        <!-- Success Messages -->
+        <% if (messages && messages.length > 0) { %>
+          <div class="alert alert-success">
+            <% messages.forEach(msg => { %>
+              <p class="mb-0"><%= msg %></p>
+            <% }) %>
+          </div>
+        <% } %>
+
+        <form action="/login" method="POST" class="form-box">
 
       <!-- Email -->
       <div class="mb-3">
@@ -85,10 +115,12 @@
         <a href="/register">Register here</a>
       </p>
 
-    </form>
+        </form>
+      </div>
 
   </div>
 
-</body>
+<script src="/js/site.js"></script>`n</body>
 </html>
+
 

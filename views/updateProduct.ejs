@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8">
@@ -37,11 +37,40 @@
 
   <% if (product) { %>
 
-    <form id="updateForm"
-          action="/products/admin/edit/<%= product.id %>"
-          method="POST"
-          enctype="multipart/form-data"
-          class="mx-auto form-box glass p-4 content-narrow">
+    <div class="auth-split reveal">
+      <div class="auth-panel">
+        <h2>Keep shelves stocked</h2>
+        <p>Update pricing, discounts, and product imagery in a single pass.</p>
+        <div class="hero-steps">
+          <div class="hero-step">
+            <span>1</span>
+            <div>
+              <h3>Adjust pricing</h3>
+              <p>Promote seasonal deals.</p>
+            </div>
+          </div>
+          <div class="hero-step">
+            <span>2</span>
+            <div>
+              <h3>Review category</h3>
+              <p>Keep discovery clean.</p>
+            </div>
+          </div>
+          <div class="hero-step">
+            <span>3</span>
+            <div>
+              <h3>Update visuals</h3>
+              <p>Fresh images lift clicks.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <form id="updateForm"
+            action="/products/admin/edit/<%= product.id %>"
+            method="POST"
+            enctype="multipart/form-data"
+            class="form-box glass p-4">
 
       <!-- Product Name -->
       <div class="mb-3">
@@ -102,7 +131,8 @@
         <a href="/inventory" class="btn btn-secondary">Back to Inventory</a>
       </div>
 
-    </form>
+      </form>
+    </div>
 
   <% } else { %>
     <p class="text-center text-danger">Product not found.</p>
@@ -140,5 +170,6 @@ document.getElementById("saveBtn").addEventListener("click", function () {
 });
 </script>
 
-</body>
+<script src="/js/site.js"></script>`n</body>
 </html>
+

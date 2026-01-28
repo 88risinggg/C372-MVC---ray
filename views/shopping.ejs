@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8">
@@ -16,21 +16,59 @@
   user, 
   brandHref: "/shopping", 
   navLinks: [
-    { href: "/cart", label: "View Cart" },
+    { href: "/shopping", label: "Shop" },
+    { href: "/wallet", label: "Wallet" },
+    { href: "/cart", label: "Cart" },
     { href: "/orders", label: "My Orders" }
   ] 
 }) %>
 
 <!-- HERO -->
 <div class="container page-shell">
-  <div class="hero mb-4">
-    <h1 class="hero-title">Shop our freshest picks</h1>
-    <p class="hero-subtitle">Browse by category or search for what you need.</p>
-    <div class="d-flex gap-2 flex-wrap mt-3">
-      <a href="#products" class="btn btn-primary btn-sm">Start browsing</a>
-      <a href="/cart" class="btn btn-light btn-sm">View cart</a>
+  <section class="hero hero-split reveal mb-5">
+    <div>
+      <div class="floating-badge mb-3">Fresh picks across every aisle</div>
+      <h1 class="hero-title">Shop our freshest picks</h1>
+      <p class="hero-subtitle">Browse by category or search for exactly what you need.</p>
+      <div class="d-flex gap-2 flex-wrap mt-3">
+        <a href="#products" class="btn btn-primary btn-sm">Start browsing</a>
+        <a href="/wallet" class="btn btn-light btn-sm">Wallet</a>
+        <a href="/cart" class="btn btn-outline-primary btn-sm">View cart</a>
+      </div>
+      <div class="stat-grid mt-4">
+        <div class="stat-card">
+          <div class="stat-label">Items found</div>
+          <div class="stat-value"><%= products.length %></div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">Category</div>
+          <div class="stat-value"><%= category || "All" %></div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">Search</div>
+          <div class="stat-value"><%= search ? "Active" : "None" %></div>
+        </div>
+      </div>
     </div>
-  </div>
+    <div class="hero-panel">
+      <h2 class="h4 fw-bold mb-3">Quick filters</h2>
+      <p class="mb-3">Jump into seasonal bundles, or keep browsing the full catalog.</p>
+      <div class="feature-grid">
+        <div class="feature-card">
+          <h4>Weekly deals</h4>
+          <p>Top picks with extra savings.</p>
+        </div>
+        <div class="feature-card">
+          <h4>Kitchen staples</h4>
+          <p>Daily essentials in one place.</p>
+        </div>
+        <div class="feature-card">
+          <h4>Ready meals</h4>
+          <p>Quick, fresh, and convenient.</p>
+        </div>
+      </div>
+    </div>
+  </section>
 
   <!-- CAROUSEL -->
   <div id="heroCarousel" class="carousel slide mb-5 shadow-lg rounded overflow-hidden" data-bs-ride="carousel">
@@ -47,32 +85,33 @@
     </div>
   </div>
 
-  <!-- Greeting -->
-  <div class="section-heading">
-    <div>
+  <div class="split-grid mb-4 reveal">
+    <div class="split-card">
       <div class="section-title">Welcome back</div>
       <div class="section-subtitle"><%= user.username %> (<%= user.role %>)</div>
+      <p class="section-helper mt-2 mb-0">Discover the freshest arrivals and quick add-ons for today.</p>
     </div>
-  </div>
 
-  <!-- SEARCH BAR -->
-  <div class="glass mb-4">
-    <form action="/shopping" method="GET" class="row g-2 align-items-center">
-      <div class="col-12 col-md-8">
-        <input 
-          type="text" 
-          class="form-control"
-          placeholder="Search for products..."
-          name="search"
-          aria-label="Search for products"
-          value="<%= typeof search !== 'undefined' ? search : '' %>"
-        >
-      </div>
-      <div class="col-12 col-md-4 d-flex gap-2">
-        <button class="btn btn-primary w-100">Search</button>
-        <a href="/shopping" class="btn btn-light w-100">Clear</a>
-      </div>
-    </form>
+    <div class="split-card">
+      <div class="section-title">Search & filter</div>
+      <p class="section-helper">Find products fast with keyword search and smart filters.</p>
+      <form action="/shopping" method="GET" class="row g-2 align-items-center mt-2">
+        <div class="col-12 col-md-7">
+          <input 
+            type="text" 
+            class="form-control"
+            placeholder="Search for products..."
+            name="search"
+            aria-label="Search for products"
+            value="<%= typeof search !== 'undefined' ? search : '' %>"
+          >
+        </div>
+        <div class="col-12 col-md-5 d-flex gap-2">
+          <button class="btn btn-primary w-100">Search</button>
+          <a href="/shopping" class="btn btn-light w-100">Clear</a>
+        </div>
+      </form>
+    </div>
   </div>
 
   <!-- CATEGORY FILTER -->
@@ -92,7 +131,7 @@
     ];
   %>
 
-  <div class="pill-nav mb-4">
+  <div class="pill-nav mb-4 reveal">
     <% categories.forEach(c => { %>
       <a 
         href="/shopping<%= c !== 'All' ? ('?category=' + encodeURIComponent(c)) : '' %>" 
@@ -104,7 +143,7 @@
   </div>
 
   <!-- PRODUCT GRID -->
-  <div id="products" class="row g-4">
+  <div id="products" class="row g-4 reveal">
 
     <% if (products.length === 0) { %>
       <div class="text-center mt-5">
@@ -185,5 +224,6 @@
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
-</body>
+<script src="/js/site.js"></script>`n</body>
 </html>
+

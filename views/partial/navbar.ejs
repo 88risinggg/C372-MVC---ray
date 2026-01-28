@@ -39,7 +39,10 @@
 
 <nav class="navbar navbar-expand-sm navbar-light navbar-grow shadow-sm">
   <div class="container-fluid">
-    <a class="navbar-brand fw-bold" href="<%= resolvedBrandHref %>"><%= resolvedBrandLabel %></a>
+    <a class="navbar-brand fw-bold" href="<%= resolvedBrandHref %>">
+      <span class="brand-mark">GM</span>
+      <span><%= resolvedBrandLabel %></span>
+    </a>
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#mainNav">
       <span class="navbar-toggler-icon"></span>
@@ -51,11 +54,14 @@
           <li class="nav-item">
             <%
               const isCart = link.href === "/cart";
-              const cartLabel = (typeof cartCount !== "undefined" && cartCount > 0 && isCart)
-                ? `${link.label} (${cartCount})`
-                : link.label;
+              const showCount = (typeof cartCount !== "undefined" && cartCount > 0 && isCart);
             %>
-            <a class="nav-link <%= link.active ? "active" : "" %>" href="<%= link.href %>"><%= cartLabel %></a>
+            <a class="nav-link <%= link.active ? "active" : "" %>" href="<%= link.href %>">
+              <span><%= link.label %></span>
+              <% if (showCount) { %>
+                <span class="nav-pill"><%= cartCount %></span>
+              <% } %>
+            </a>
           </li>
         <% }) %>
 

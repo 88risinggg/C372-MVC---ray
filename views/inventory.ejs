@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8">
@@ -27,7 +27,7 @@
 
   <!-- Main Container -->
   <div class="container page-shell">
-    <div class="page-header">
+  <div class="page-header">
       <div>
         <p class="page-kicker">Admin</p>
         <h1 class="page-title">Product Inventory</h1>
@@ -45,6 +45,25 @@
       </div>
     </div>
 
+    <% const totalProducts = products.length; %>
+    <% const outCount = outOfStock ? outOfStock.length : 0; %>
+    <% const categoryCount = new Set(products.map(p => p.category)).size; %>
+
+    <div class="triple-grid my-4 reveal">
+      <div class="kpi-card">
+        <div class="kpi-label">Total products</div>
+        <div class="kpi-value"><%= totalProducts %></div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-label">Out of stock</div>
+        <div class="kpi-value"><%= outCount %></div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-label">Categories</div>
+        <div class="kpi-value"><%= categoryCount %></div>
+      </div>
+    </div>
+
     <% if (outOfStock && outOfStock.length > 0) { %>
       <div class="alert alert-warning d-flex align-items-start gap-2">
         <div class="fw-semibold">Out of stock:</div>
@@ -57,10 +76,10 @@
     <% } %>
 
     <!-- Product Table -->
-    <div class="table-responsive glass p-3">
+    <div class="table-responsive glass p-3 reveal">
       <table class="table table-hover align-middle text-center">
 
-        <thead class="table-dark">
+      <thead class="table-light">
           <tr>
             <th width="150">Product</th>
             <th width="120">Image</th>
@@ -147,5 +166,6 @@
     </script>
   <% } %>
 
-</body>
+<script src="/js/site.js"></script>`n</body>
 </html>
+

@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8">
@@ -21,6 +21,8 @@
     brandHref: "/shopping", 
     navLinks: [
       { href: "/shopping", label: "Shop" },
+      { href: "/wallet", label: "Wallet" },
+      { href: "/cart", label: "Cart" },
       { href: "/orders", label: "My Orders" }
     ] 
   }) %>
@@ -42,10 +44,25 @@
       </div>
     </div>
 
+    <div class="triple-grid mb-4 reveal">
+      <div class="kpi-card">
+        <div class="kpi-label">Step 1</div>
+        <div class="kpi-value">Cart review</div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-label">Step 2</div>
+        <div class="kpi-value">Payment</div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-label">Step 3</div>
+        <div class="kpi-value">Order placed</div>
+      </div>
+    </div>
+
     <div class="row g-4">
 
       <!-- Order Summary -->
-      <div class="col-lg-5">
+      <div class="col-lg-5 reveal">
         <div class="card glass h-100 shadow-sm">
           <div class="card-body">
             <div class="d-flex justify-content-between align-items-center mb-2">
@@ -96,7 +113,7 @@
       </div>
 
       <!-- Payment Selection -->
-      <div class="col-lg-7">
+      <div class="col-lg-7 reveal">
         <div class="card glass h-100 shadow-sm">
           <div class="card-body">
             <h2 class="h4 mb-3">Payment</h2>
@@ -108,7 +125,7 @@
               <% } %>
 
               <div class="col-12">
-                <div class="card border-0 shadow-sm">
+                <div class="split-card">
                   <div class="card-body">
                     <div class="form-check">
                       <input class="form-check-input" type="radio" name="paymentMethod" value="Stripe" aria-label="Stripe card" id="pm-stripe" checked>
@@ -120,7 +137,7 @@
               </div>
 
               <div class="col-12">
-                <div class="card border-0 shadow-sm">
+                <div class="split-card">
                   <div class="card-body">
                     <div class="form-check">
                       <input class="form-check-input" type="radio" name="paymentMethod" value="Wallet" aria-label="Wallet" id="pm-wallet">
@@ -132,7 +149,7 @@
               </div>
 
               <div class="col-12">
-                <div class="card border-0 shadow-sm">
+                <div class="split-card">
                   <div class="card-body">
                     <div class="form-check">
                       <input class="form-check-input" type="radio" name="paymentMethod" value="PayPal" aria-label="PayPal" id="pm-paypal">
@@ -144,7 +161,7 @@
               </div>
 
               <div class="col-12">
-                <div class="card border-0 shadow-sm">
+                <div class="split-card">
                   <div class="card-body">
                     <div class="form-check">
                       <input class="form-check-input" type="radio" name="paymentMethod" value="PayNow" aria-label="PayNow" id="pm-paynow">
@@ -156,7 +173,7 @@
               </div>
 
               <div class="col-12">
-                <div class="card border-0 shadow-sm">
+                <div class="split-card">
                   <div class="card-body">
                     <div class="form-check">
                       <input class="form-check-input" type="radio" name="paymentMethod" value="GrabPay" aria-label="GrabPay" id="pm-grabpay">
@@ -168,7 +185,7 @@
               </div>
 
               <div class="col-12">
-                <div class="card border-0 shadow-sm">
+                <div class="split-card">
                   <div class="card-body">
                     <div class="form-check">
                       <input class="form-check-input" type="radio" name="paymentMethod" value="NETS QR" aria-label="NETS QR" id="pm-nets">
@@ -192,14 +209,14 @@
               </div>
 
               <div class="col-12">
-                <div id="stripe-section" class="card border-0 shadow-sm">
+                <div id="stripe-section" class="split-card">
                   <div class="card-body text-center">
                     <h6 class="fw-semibold mb-3">Card via Stripe</h6>
                     <p class="small text-muted mb-0">You will be redirected to Stripe to complete payment securely.</p>
                   </div>
                 </div>
 
-                <div id="wallet-section" class="card border-0 shadow-sm d-none">
+                <div id="wallet-section" class="split-card d-none">
                   <div class="card-body text-center">
                     <h6 class="fw-semibold mb-3">Wallet Balance</h6>
                     <p class="small text-muted mb-2">Current balance: <span class="fw-semibold">$<%= Number(walletBalance || 0).toFixed(2) %></span></p>
@@ -207,14 +224,14 @@
                   </div>
                 </div>
 
-                <div id="paypal-section" class="card border-0 shadow-sm d-none">
+                <div id="paypal-section" class="split-card d-none">
                   <div class="card-body text-center">
                     <h6 class="fw-semibold mb-3">PayPal</h6>
                     <p class="small text-muted mb-0">You will be redirected to PayPal to approve the payment.</p>
                   </div>
                 </div>
 
-                <div id="paynow-section" class="card border-0 shadow-sm d-none">
+                <div id="paynow-section" class="split-card d-none">
                   <div class="card-body text-center">
                     <h6 class="fw-semibold mb-3">PayNow</h6>
                     <p class="small text-muted">Scan the QR code to transfer the total amount.</p>
@@ -222,7 +239,7 @@
                   </div>
                 </div>
 
-                <div id="grabpay-section" class="card border-0 shadow-sm d-none">
+                <div id="grabpay-section" class="split-card d-none">
                   <div class="card-body text-center">
                     <h6 class="fw-semibold mb-3">GrabPay</h6>
                     <p class="small text-muted">Scan with Grab to complete payment.</p>
@@ -230,7 +247,7 @@
                   </div>
                 </div>
 
-                <div id="nets-section" class="card border-0 shadow-sm d-none">
+                <div id="nets-section" class="split-card d-none">
                   <div class="card-body text-center">
                     <h6 class="fw-semibold mb-3">NETS QR</h6>
                     <p class="small text-muted mb-0">You will be redirected to a NETS QR page to scan and complete payment.</p>
@@ -307,5 +324,6 @@
     methodRadios.forEach(radio => radio.addEventListener("change", updatePaymentUI));
     updatePaymentUI();
   </script>
-</body>
+<script src="/js/site.js"></script>`n</body>
 </html>
+

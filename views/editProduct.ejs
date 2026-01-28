@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -34,10 +34,38 @@
         </div>
 
         <% if (product) { %>
+        <div class="auth-split reveal">
+          <div class="auth-panel">
+            <h2>Fine-tune the listing</h2>
+            <p>Review pricing and stock levels before saving your updates.</p>
+            <div class="hero-steps">
+              <div class="hero-step">
+                <span>1</span>
+                <div>
+                  <h3>Check pricing</h3>
+                  <p>Update discounts when needed.</p>
+                </div>
+              </div>
+              <div class="hero-step">
+                <span>2</span>
+                <div>
+                  <h3>Validate stock</h3>
+                  <p>Keep inventory accurate.</p>
+                </div>
+              </div>
+              <div class="hero-step">
+                <span>3</span>
+                <div>
+                  <h3>Refresh visuals</h3>
+                  <p>Swap images for new campaigns.</p>
+                </div>
+              </div>
+            </div>
+          </div>
 
-        <form action="/products/admin/edit/<%= product.id %>" 
-              method="POST" enctype="multipart/form-data" 
-              class="mx-auto form-box content-narrow">
+          <form action="/products/admin/edit/<%= product.id %>" 
+                method="POST" enctype="multipart/form-data" 
+                class="form-box">
 
             <!-- Product Name -->
             <div class="mb-3">
@@ -77,7 +105,8 @@
             <!-- Submit Button -->
             <button type="submit" class="btn btn-primary w-100">Update Product</button>
 
-        </form>
+          </form>
+        </div>
 
         <% } else { %>
             <p class="text-center text-danger">Product not found.</p>
@@ -89,5 +118,6 @@
 
     </div>
 
-</body>
+<script src="/js/site.js"></script>`n</body>
 </html>
+

@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8">
@@ -23,21 +23,51 @@
 
   <!-- Register Form -->
   <div class="container page-shell auth-shell">
-    <div class="page-header page-header--center mb-4">
-      <p class="page-kicker">Account</p>
-      <h1 class="page-title">Create your account</h1>
-      <p class="page-subtitle">Join Grow Mart and start shopping.</p>
-    </div>
-
-    <% if (messages && messages.length > 0) { %>
-      <div class="alert alert-danger">
-        <% messages.forEach(msg => { %>
-          <p class="mb-0"><%= msg %></p>
-        <% }) %>
+    <div class="auth-split reveal">
+      <div class="auth-panel">
+        <h2>Join Grow Mart</h2>
+        <p>Build your wallet, track orders, and unlock weekly savings.</p>
+        <div class="hero-steps">
+          <div class="hero-step">
+            <span>1</span>
+            <div>
+              <h3>Create profile</h3>
+              <p>Save delivery info once.</p>
+            </div>
+          </div>
+          <div class="hero-step">
+            <span>2</span>
+            <div>
+              <h3>Load your wallet</h3>
+              <p>Pay faster at checkout.</p>
+            </div>
+          </div>
+          <div class="hero-step">
+            <span>3</span>
+            <div>
+              <h3>Track deliveries</h3>
+              <p>Get real-time updates.</p>
+            </div>
+          </div>
+        </div>
       </div>
-    <% } %>
 
-    <form action="/register" method="POST" class="form-box">
+      <div>
+        <div class="page-header page-header--center mb-4">
+          <p class="page-kicker">Account</p>
+          <h1 class="page-title">Create your account</h1>
+          <p class="page-subtitle">Join Grow Mart and start shopping.</p>
+        </div>
+
+        <% if (messages && messages.length > 0) { %>
+          <div class="alert alert-danger">
+            <% messages.forEach(msg => { %>
+              <p class="mb-0"><%= msg %></p>
+            <% }) %>
+          </div>
+        <% } %>
+
+        <form action="/register" method="POST" class="form-box">
 
       <!-- Username -->
       <div class="mb-3">
@@ -112,9 +142,11 @@
         <a href="/login">Login here</a>
       </p>
 
-    </form>
+        </form>
+      </div>
 
   </div>
 
-</body>
+<script src="/js/site.js"></script>`n</body>
 </html>
+

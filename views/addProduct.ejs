@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8">
@@ -36,10 +36,39 @@
     <p class="page-subtitle">Create a new item for the storefront.</p>
   </div>
 
-  <form action="/products/admin/add"
-        method="POST"
-        enctype="multipart/form-data"
-        class="mx-auto form-box glass content-narrow">
+  <div class="auth-split reveal">
+    <div class="auth-panel">
+      <h2>Launch a new item</h2>
+      <p>Keep descriptions short and clear. Use bright images and accurate stock counts.</p>
+      <div class="hero-steps">
+        <div class="hero-step">
+          <span>1</span>
+          <div>
+            <h3>Product basics</h3>
+            <p>Name, category, and price.</p>
+          </div>
+        </div>
+        <div class="hero-step">
+          <span>2</span>
+          <div>
+            <h3>Inventory ready</h3>
+            <p>Set stock and discount.</p>
+          </div>
+        </div>
+        <div class="hero-step">
+          <span>3</span>
+          <div>
+            <h3>Upload imagery</h3>
+            <p>Use bright, clear photos.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <form action="/products/admin/add"
+          method="POST"
+          enctype="multipart/form-data"
+          class="form-box glass">
 
     <!-- Name -->
     <div class="mb-3">
@@ -94,7 +123,8 @@
       Add Product
     </button>
 
-  </form>
+    </form>
+  </div>
 
 </div>
 
@@ -111,6 +141,7 @@
     })};
 </script>
 
-</body>
+<script src="/js/site.js"></script>`n</body>
 </html>
+
 

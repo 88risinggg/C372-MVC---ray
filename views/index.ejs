@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8">
@@ -19,22 +19,85 @@
 <%- include("partial/navbar", { 
   user, 
   brandHref: "/", 
-  navLinks: (user && user.role !== "admin") ? [{ href: "/shopping", label: "Shop" }] : undefined 
+  navLinks: (user && user.role !== "admin") ? [
+    { href: "/shopping", label: "Shop" },
+    { href: "/wallet", label: "Wallet" },
+    { href: "/cart", label: "Cart" },
+    { href: "/orders", label: "My Orders" }
+  ] : undefined 
 }) %>
 
 <!-- HERO -->
 <div class="container page-shell">
-  <div class="hero mb-4">
-    <h1 class="hero-title">Welcome to Grow Mart</h1>
-    <p class="hero-subtitle">Bright produce, fair prices, fast checkout.</p>
-    <div class="d-flex gap-2 flex-wrap mt-3">
-      <a href="/shopping" class="btn btn-primary btn-sm">Start shopping</a>
-      <a href="/orders" class="btn btn-light btn-sm">My orders</a>
+  <section class="hero hero-split reveal mb-5">
+    <div>
+      <div class="floating-badge mb-3">Fresh market picks, every day</div>
+      <h1 class="hero-title">Welcome to Grow Mart</h1>
+      <p class="hero-subtitle">Bright produce, fair prices, and a checkout that feels effortless.</p>
+      <div class="d-flex gap-2 flex-wrap mt-3">
+        <a href="/shopping" class="btn btn-primary btn-sm">Start shopping</a>
+        <a href="/wallet" class="btn btn-light btn-sm">Wallet</a>
+        <a href="/orders" class="btn btn-outline-primary btn-sm">My orders</a>
+      </div>
+      <div class="stat-grid mt-4">
+        <div class="stat-card">
+          <div class="stat-label">Delivery</div>
+          <div class="stat-value">Same day</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">Savings</div>
+          <div class="stat-value">Weekly deals</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">Wallet</div>
+          <div class="stat-value">Instant pay</div>
+        </div>
+      </div>
     </div>
-  </div>
+    <div class="hero-panel">
+      <h2 class="h4 fw-bold mb-3">Market highlights</h2>
+      <div class="hero-steps mb-3">
+        <div class="hero-step">
+          <span>1</span>
+          <div>
+            <h3>Pick your produce</h3>
+            <p>Browse curated weekly selections.</p>
+          </div>
+        </div>
+        <div class="hero-step">
+          <span>2</span>
+          <div>
+            <h3>Fast checkout</h3>
+            <p>Pay with card, wallet, or QR.</p>
+          </div>
+        </div>
+        <div class="hero-step">
+          <span>3</span>
+          <div>
+            <h3>Track easily</h3>
+            <p>Stay updated from order to door.</p>
+          </div>
+        </div>
+      </div>
+      <div class="feature-grid">
+        <div class="feature-card">
+          <h4>Wallet ready</h4>
+          <p>Top up once, pay in seconds.</p>
+        </div>
+        <div class="feature-card">
+          <h4>Fresh guarantee</h4>
+          <p>Hand-picked quality checks.</p>
+        </div>
+        <div class="feature-card">
+          <h4>Smart bundles</h4>
+          <p>Mix & match everyday staples.</p>
+        </div>
+      </div>
+    </div>
+  </section>
 
   <!-- CAROUSEL -->
-  <div id="heroCarousel" class="carousel slide mb-5 shadow-lg rounded overflow-hidden" data-bs-ride="carousel">
+  <div id="heroCarousel" class="carousel slide mb-5 shadow-lg rounded overflow-hidden reveal" data-bs-ride="carousel">
     <div class="carousel-inner">
       <div class="carousel-item active">
         <img src="/images/banner1.jpg" class="d-block w-100" style="height: 320px; object-fit: cover;">
@@ -49,7 +112,7 @@
   </div>
 
   <!-- FEATURED ITEMS -->
-  <div class="section-heading">
+  <div class="section-heading reveal">
     <div>
       <div class="section-title">Featured Items</div>
       <div class="section-subtitle">Hand-picked picks for you</div>
@@ -58,7 +121,7 @@
   </div>
 
   <!-- FEATURED GRID -->
-  <div class="row g-4">
+  <div class="row g-4 reveal">
     <% products.forEach(p => { %>
       <div class="col-6 col-md-3">
         <div class="card product-card shadow-sm">
@@ -116,5 +179,6 @@ function loginFirst() {
 }
 </script>
 
-</body>
+<script src="/js/site.js"></script>`n</body>
 </html>
+

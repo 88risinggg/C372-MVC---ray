@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -26,6 +26,7 @@
           ]
         : [
             { href: "/shopping", label: "Shop" },
+            { href: "/wallet", label: "Wallet" },
             { href: "/cart", label: "Cart" }
           ] 
     }) %>
@@ -44,49 +45,60 @@
         </div>
 
         <% if (product) { %>
+            <% const hasDiscount = product.discount && product.discount > 0; %>
+            <% const basePrice = Number(product.price || 0); %>
+            <% const finalPrice = hasDiscount ? basePrice * (1 - product.discount / 100) : basePrice; %>
+            <% const isAdmin = user && user.role === "admin"; %>
 
-            <div class="card glass p-4 mx-auto content-narrow">
-
-                <!-- Image -->
-                <div class="text-center mb-3">
-                    <img src="/images/<%= product.image %>"
-                         class="rounded shadow-sm"
-                         width="60%">
-                    <% if (product.quantity <= 0) { %>
-                        <div class="mt-2">
-                            <span class="badge bg-danger">Out of Stock</span>
+            <div class="row g-4 reveal">
+                <div class="col-lg-6">
+                    <div class="card glass h-100">
+                        <div class="card-body text-center">
+                            <img src="/images/<%= product.image %>" class="rounded shadow-sm mb-3" style="max-width: 360px;">
+                            <% if (product.quantity <= 0) { %>
+                                <div>
+                                    <span class="badge bg-danger">Out of Stock</span>
+                                </div>
+                            <% } %>
                         </div>
-                    <% } %>
+                    </div>
                 </div>
 
-                <!-- Details -->
-                <p><b>Name:</b><br> <%= product.productName %></p>
-                <p><b>Quantity:</b><br> <%= product.quantity %></p>
-                <% const hasDiscount = product.discount && product.discount > 0; %>
-                <% const basePrice = Number(product.price || 0); %>
-                <% const finalPrice = hasDiscount ? basePrice * (1 - product.discount / 100) : basePrice; %>
-                <p><b>Price:</b><br>
-                  <span class="fw-semibold">$<%= finalPrice.toFixed(2) %></span>
-                  <% if (hasDiscount) { %>
-                    <span class="text-muted text-decoration-line-through ms-2">$<%= basePrice.toFixed(2) %></span>
-                    <span class="badge bg-danger ms-1">-<%= product.discount %>%</span>
-                  <% } %>
-                </p>
+                <div class="col-lg-6">
+                    <div class="card glass h-100">
+                        <div class="card-body">
+                            <h2 class="h4 mb-2"><%= product.productName %></h2>
+                            <p class="text-muted">Freshly stocked and ready to ship.</p>
+                            <div class="d-flex align-items-center gap-2 mb-3">
+                                <span class="badge badge-soft"><%= product.category %></span>
+                                <span class="text-muted small">Stock: <%= product.quantity %></span>
+                            </div>
 
+                            <div class="mb-3">
+                                <div class="fw-semibold">Price</div>
+                                <div class="h4 fw-bold">$<%= finalPrice.toFixed(2) %></div>
+                                <% if (hasDiscount) { %>
+                                    <span class="text-muted text-decoration-line-through">$<%= basePrice.toFixed(2) %></span>
+                                    <span class="badge bg-danger ms-2">-<%= product.discount %>%</span>
+                                <% } %>
+                            </div>
+
+                            <div class="d-flex gap-2 flex-wrap">
+                                <a href="<%= isAdmin ? '/inventory' : '/shopping' %>" class="btn btn-outline-primary">
+                                    <%= isAdmin ? 'Back to Inventory' : 'Continue Shopping' %>
+                                </a>
+                                <a href="/cart" class="btn btn-primary">View Cart</a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
             </div>
-
         <% } else { %>
-
             <p class="text-danger text-center">No product found.</p>
-
         <% } %>
-
-        <!-- Back Button -->
-        <div class="text-center mt-4">
-            <a href="/inventory" class="btn btn-primary">Back to Inventory</a>
-        </div>
 
     </div>
 
-</body>
+<script src="/js/site.js"></script>`n</body>
 </html>
+

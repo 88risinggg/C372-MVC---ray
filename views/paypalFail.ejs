@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8">
@@ -13,12 +13,13 @@
     brandHref: "/shopping", 
     navLinks: [
       { href: "/shopping", label: "Shop" },
+      { href: "/wallet", label: "Wallet" },
       { href: "/orders", label: "My Orders" }
     ] 
   }) %>
 
   <div class="container page-shell">
-    <section class="payment-hero payment-hero--single payment-hero--danger payment-success">
+    <section class="payment-hero payment-hero--single payment-hero--danger payment-success reveal">
       <div class="payment-hero-main">
         <div class="payment-icon" role="img" aria-label="Payment failed">
           <svg viewBox="0 0 64 64" aria-hidden="true">
@@ -38,5 +39,6 @@
       </div>
     </section>
   </div>
-</body>
+<script src="/js/site.js"></script>`n</body>
 </html>
+
