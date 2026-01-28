@@ -56,16 +56,84 @@
 
     <div class="split-card">
       <h3 class="h5 mb-3">Top up wallet</h3>
-      <form method="POST" action="/wallet/topup" class="row g-3">
-        <div class="col-md-8">
+      <form method="POST" action="/wallet/topup" class="row g-3" id="wallet-topup-form">
+        <div class="col-md-7">
           <label class="form-label">Top-up amount (SGD)</label>
           <input type="number" step="0.01" min="1" class="form-control" name="amount" placeholder="e.g. 10.00" required>
         </div>
-        <div class="col-md-4 d-flex align-items-end">
-          <button type="submit" class="btn btn-primary w-100">Top Up</button>
+        <div class="col-md-5 d-flex align-items-end">
+          <button type="submit" class="btn btn-primary w-100">Continue to Pay</button>
+        </div>
+
+        <div class="col-12">
+          <div class="section-title mb-2">Payment method</div>
+          <div class="row g-2">
+            <div class="col-12">
+              <div class="split-card">
+                <div class="form-check">
+                  <input class="form-check-input" type="radio" name="paymentMethod" value="Stripe" id="wallet-pm-stripe" checked>
+                  <label class="form-check-label fw-semibold" for="wallet-pm-stripe">Card (Stripe)</label>
+                  <p class="small text-muted mb-0">Pay securely by card via Stripe.</p>
+                </div>
+              </div>
+            </div>
+
+            <div class="col-12">
+              <div class="split-card">
+                <div class="form-check">
+                  <input class="form-check-input" type="radio" name="paymentMethod" value="PayPal" id="wallet-pm-paypal">
+                  <label class="form-check-label fw-semibold" for="wallet-pm-paypal">PayPal</label>
+                  <p class="small text-muted mb-0">Pay with your PayPal account.</p>
+                </div>
+              </div>
+            </div>
+
+            <div class="col-12">
+              <div class="split-card">
+                <div class="form-check">
+                  <input class="form-check-input" type="radio" name="paymentMethod" value="PayNow" id="wallet-pm-paynow">
+                  <label class="form-check-label fw-semibold" for="wallet-pm-paynow">PayNow</label>
+                  <p class="small text-muted mb-0">Instant bank transfer via QR.</p>
+                </div>
+              </div>
+            </div>
+
+            <div class="col-12">
+              <div class="split-card">
+                <div class="form-check">
+                  <input class="form-check-input" type="radio" name="paymentMethod" value="NETS QR" id="wallet-pm-nets">
+                  <label class="form-check-label fw-semibold" for="wallet-pm-nets">NETS QR</label>
+                  <p class="small text-muted mb-0">Scan with your banking or wallet app.</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="col-12">
+          <div id="wallet-stripe-section" class="split-card">
+            <h6 class="fw-semibold mb-2">Card via Stripe</h6>
+            <p class="small text-muted mb-0">You will be redirected to Stripe to complete payment securely.</p>
+          </div>
+
+          <div id="wallet-paypal-section" class="split-card d-none">
+            <h6 class="fw-semibold mb-2">PayPal</h6>
+            <p class="small text-muted mb-0">You will be redirected to PayPal to approve the payment.</p>
+          </div>
+
+          <div id="wallet-paynow-section" class="split-card d-none">
+            <h6 class="fw-semibold mb-2">PayNow</h6>
+            <p class="small text-muted mb-2">Scan the QR code to top up your wallet.</p>
+            <img src="/images/paynowqr.jpg" alt="PayNow QR" class="img-fluid rounded shadow-sm" style="max-width: 260px;">
+          </div>
+
+          <div id="wallet-nets-section" class="split-card d-none">
+            <h6 class="fw-semibold mb-2">NETS QR</h6>
+            <p class="small text-muted mb-0">You will be redirected to a NETS QR page to scan and complete payment.</p>
+          </div>
         </div>
       </form>
-      <p class="small text-muted mt-3 mb-3">Top-ups are added immediately to your wallet balance.</p>
+      <p class="small text-muted mt-3 mb-3">Top-ups are added after payment confirmation.</p>
       <div class="feature-grid">
         <div class="feature-card">
           <h4>Upgrade ready</h4>
@@ -85,6 +153,46 @@
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
-<script src="/js/site.js"></script>`n</body>
+<script>
+  const topupRadios = document.querySelectorAll('input[name="paymentMethod"]');
+  const stripeSection = document.getElementById("wallet-stripe-section");
+  const paypalSection = document.getElementById("wallet-paypal-section");
+  const paynowSection = document.getElementById("wallet-paynow-section");
+  const netsSection = document.getElementById("wallet-nets-section");
+
+  const showTopupOnly = (section) => {
+    [stripeSection, paypalSection, paynowSection, netsSection].forEach(block => {
+      if (!block) return;
+      if (section && block === section) {
+        block.classList.remove("d-none");
+      } else {
+        block.classList.add("d-none");
+      }
+    });
+  };
+
+  const updateTopupUI = () => {
+    const selected = document.querySelector('input[name="paymentMethod"]:checked');
+    switch (selected?.value) {
+      case "PayPal":
+        showTopupOnly(paypalSection);
+        break;
+      case "PayNow":
+        showTopupOnly(paynowSection);
+        break;
+      case "NETS QR":
+        showTopupOnly(netsSection);
+        break;
+      case "Stripe":
+      default:
+        showTopupOnly(stripeSection);
+    }
+  };
+
+  topupRadios.forEach(radio => radio.addEventListener("change", updateTopupUI));
+  updateTopupUI();
+</script>
+<script src="/js/site.js"></script>
+</body>
 </html>
 

@@ -595,23 +595,98 @@ app.get("/wallet", checkAuthenticated, (req, res) => {
         });
 });
 
-// Wallet top-up
+// Wallet top-up (payment methods: Stripe, PayPal, PayNow, NETS)
 app.post("/wallet/topup", checkAuthenticated, (req, res) => {
     const amount = Number(req.body.amount || 0);
+    const paymentMethod = (req.body.paymentMethod || "").trim();
+    const normalizedPaymentMethod = normalizePaymentMethod(paymentMethod);
+
     if (!Number.isFinite(amount) || amount <= 0) {
         req.flash("error", "Please enter a valid top-up amount.");
         return res.redirect("/wallet");
     }
 
-    adjustWalletBalance(req.session.user.id, amount)
+    if (!["Stripe", "PayPal", "PayNow", "NETS QR"].includes(normalizedPaymentMethod)) {
+        req.flash("error", "Please select a valid payment method.");
+        return res.redirect("/wallet");
+    }
+
+    const baseUrl = `${req.protocol}://${req.get("host")}`;
+    req.session.pendingTopup = {
+        provider: normalizedPaymentMethod === "NETS QR" ? "nets" : normalizedPaymentMethod.toLowerCase(),
+        amount
+    };
+
+    if (normalizedPaymentMethod === "Stripe") {
+        return stripePayments.createCheckoutSession({
+            items: [{ productName: "Wallet Top Up", price: amount, quantity: 1 }],
+            totals: { deliveryFee: 0, gst: 0 },
+            baseUrl,
+            customerEmail: req.session.user?.email
+        })
+            .then(session => {
+                req.session.pendingTopup.sessionId = session.id;
+                return res.redirect(session.url);
+            })
+            .catch(err => {
+                console.log("Stripe top-up error:", err);
+                req.flash("error", "Stripe setup failed. Please try again.");
+                return res.redirect("/wallet");
+            });
+    }
+
+    if (normalizedPaymentMethod === "PayPal") {
+        return paypal.createOrder(
+            amount,
+            `${baseUrl}/paypal/success`,
+            `${baseUrl}/paypal/cancel`
+        )
+            .then(({ approvalUrl }) => res.redirect(approvalUrl))
+            .catch(err => {
+                console.log("PayPal top-up error:", err);
+                req.flash("error", "PayPal setup failed. Please try again.");
+                return res.redirect("/wallet");
+            });
+    }
+
+    if (normalizedPaymentMethod === "PayNow") {
+        return res.redirect("/wallet/paynow");
+    }
+
+    return netsQr.generateQrCode(req, res, amount);
+});
+
+app.get("/wallet/paynow", checkAuthenticated, (req, res) => {
+    const pending = req.session.pendingTopup;
+    if (!pending || pending.provider !== "paynow") {
+        req.flash("error", "No pending PayNow top-up found.");
+        return res.redirect("/wallet");
+    }
+
+    res.render("walletPaynow", {
+        user: req.session.user,
+        amount: Number(pending.amount || 0),
+        errors: req.flash("error")
+    });
+});
+
+app.post("/wallet/paynow/confirm", checkAuthenticated, (req, res) => {
+    const pending = req.session.pendingTopup;
+    if (!pending || pending.provider !== "paynow") {
+        req.flash("error", "No pending PayNow top-up found.");
+        return res.redirect("/wallet");
+    }
+
+    adjustWalletBalance(req.session.user.id, Number(pending.amount || 0))
         .then(() => getWalletBalance(req.session.user.id))
         .then(balance => {
             req.session.user.wallet_balance = balance;
-            req.flash("success", `Wallet topped up by $${amount.toFixed(2)}.`);
+            req.session.pendingTopup = null;
+            req.flash("success", `Wallet topped up by $${Number(pending.amount || 0).toFixed(2)}.`);
             res.redirect("/wallet");
         })
         .catch(err => {
-            console.error("Wallet top-up error:", err);
+            console.error("PayNow top-up error:", err);
             req.flash("error", "Top-up failed. Please try again.");
             res.redirect("/wallet");
         });
@@ -839,8 +914,36 @@ app.post("/checkout", checkAuthenticated, (req, res) => {
 });
 
 app.get("/paypal/success", checkAuthenticated, (req, res) => {
+    const pendingTopup = req.session.pendingTopup;
     const pending = req.session.pendingOrder;
     const orderId = req.query.token;
+
+    if (pendingTopup?.provider === "paypal") {
+        if (!orderId) {
+            req.flash("error", "Missing PayPal order ID.");
+            return res.redirect("/wallet");
+        }
+
+        return paypal.captureOrder(orderId)
+            .then(capture => {
+                if (capture?.status !== "COMPLETED") {
+                    throw new Error("PayPal capture not completed.");
+                }
+                return adjustWalletBalance(req.session.user.id, Number(pendingTopup.amount || 0));
+            })
+            .then(() => getWalletBalance(req.session.user.id))
+            .then(balance => {
+                req.session.user.wallet_balance = balance;
+                req.session.pendingTopup = null;
+                req.flash("success", `Wallet topped up by $${Number(pendingTopup.amount || 0).toFixed(2)}.`);
+                res.redirect("/wallet");
+            })
+            .catch(err => {
+                console.log("PayPal top-up capture error:", err);
+                req.flash("error", "PayPal top-up failed. Please try again.");
+                res.redirect("/wallet");
+            });
+    }
 
     if (!pending?.cart?.length || pending.provider !== "paypal") {
         req.flash("error", "No pending PayPal order found.");
@@ -876,6 +979,12 @@ app.get("/paypal/success", checkAuthenticated, (req, res) => {
 });
 
 app.get("/paypal/cancel", checkAuthenticated, (req, res) => {
+    if (req.session.pendingTopup?.provider === "paypal") {
+        req.session.pendingTopup = null;
+        req.flash("error", "PayPal top-up was cancelled.");
+        return res.redirect("/wallet");
+    }
+
     req.session.pendingOrder = null;
     res.render("paypalFail", {
         message: "PayPal payment was cancelled.",
@@ -884,8 +993,37 @@ app.get("/paypal/cancel", checkAuthenticated, (req, res) => {
 });
 
 app.get("/stripe/success", checkAuthenticated, async (req, res) => {
+    const pendingTopup = req.session.pendingTopup;
     const pending = req.session.pendingOrder;
     const sessionId = req.query.session_id;
+
+    if (pendingTopup?.provider === "stripe") {
+        if (!sessionId) {
+            req.flash("error", "Missing Stripe session ID.");
+            return res.redirect("/wallet");
+        }
+
+        try {
+            if (pendingTopup.sessionId && pendingTopup.sessionId !== sessionId) {
+                throw new Error("Stripe session mismatch.");
+            }
+            const session = await stripePayments.retrieveSession(sessionId);
+            if (session?.payment_status !== "paid") {
+                throw new Error("Stripe payment not completed.");
+            }
+
+            await adjustWalletBalance(req.session.user.id, Number(pendingTopup.amount || 0));
+            const balance = await getWalletBalance(req.session.user.id);
+            req.session.user.wallet_balance = balance;
+            req.session.pendingTopup = null;
+            req.flash("success", `Wallet topped up by $${Number(pendingTopup.amount || 0).toFixed(2)}.`);
+            return res.redirect("/wallet");
+        } catch (err) {
+            console.log("Stripe top-up capture error:", err);
+            req.flash("error", "Stripe top-up failed. Please try again.");
+            return res.redirect("/wallet");
+        }
+    }
 
     if (!pending?.cart?.length || pending.provider !== "stripe") {
         req.flash("error", "No pending Stripe order found.");
@@ -922,6 +1060,12 @@ app.get("/stripe/success", checkAuthenticated, async (req, res) => {
 });
 
 app.get("/stripe/cancel", checkAuthenticated, (req, res) => {
+    if (req.session.pendingTopup?.provider === "stripe") {
+        req.session.pendingTopup = null;
+        req.flash("error", "Stripe top-up was cancelled.");
+        return res.redirect("/wallet");
+    }
+
     req.session.pendingOrder = null;
     res.render("paypalFail", {
         message: "Stripe payment was cancelled.",
@@ -930,7 +1074,25 @@ app.get("/stripe/cancel", checkAuthenticated, (req, res) => {
 });
 
 app.get("/nets-qr/success", checkAuthenticated, (req, res) => {
+    const pendingTopup = req.session.pendingTopup;
     const pending = req.session.pendingOrder;
+
+    if (pendingTopup?.provider === "nets") {
+        return adjustWalletBalance(req.session.user.id, Number(pendingTopup.amount || 0))
+            .then(() => getWalletBalance(req.session.user.id))
+            .then(balance => {
+                req.session.user.wallet_balance = balance;
+                req.session.pendingTopup = null;
+                req.flash("success", `Wallet topped up by $${Number(pendingTopup.amount || 0).toFixed(2)}.`);
+                res.redirect("/wallet");
+            })
+            .catch(err => {
+                console.log("NETS top-up error:", err);
+                req.flash("error", "Top-up failed. Please try again.");
+                res.redirect("/wallet");
+            });
+    }
+
     if (!pending?.cart?.length || pending.provider !== "nets") {
         req.flash("error", "No pending NETS order found.");
         return res.redirect("/checkout");
@@ -954,6 +1116,9 @@ app.get("/nets-qr/success", checkAuthenticated, (req, res) => {
 });
 
 app.get("/nets-qr/fail", checkAuthenticated, (req, res) => {
+    if (req.session.pendingTopup?.provider === "nets") {
+        req.session.pendingTopup = null;
+    }
     req.session.pendingOrder = null;
     res.render("netsTxnFailStatus", {
         message: "Transaction failed. Please try again.",

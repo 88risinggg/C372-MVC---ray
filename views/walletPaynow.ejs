@@ -1,0 +1,58 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>PayNow Top Up - Grow Mart</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="/css/style.css">
+</head>
+
+<body class="page">
+
+<%- include("partial/navbar", { 
+  user, 
+  brandHref: "/shopping", 
+  navLinks: [
+    { href: "/shopping", label: "Shop" },
+    { href: "/wallet", label: "Wallet", active: true },
+    { href: "/cart", label: "Cart" },
+    { href: "/orders", label: "My Orders" }
+  ] 
+}) %>
+
+<div class="container page-shell">
+  <div class="page-header page-header--center mb-4">
+    <p class="page-kicker">Wallet</p>
+    <h1 class="page-title">PayNow top up</h1>
+    <p class="page-subtitle">Scan the QR to top up your wallet balance.</p>
+  </div>
+
+  <% if (errors && errors.length) { %>
+    <div class="alert alert-warning"><%= errors[0] %></div>
+  <% } %>
+
+  <div class="split-grid reveal">
+    <div class="split-card text-center">
+      <h3 class="h5 mb-2">Amount</h3>
+      <div class="display-6 fw-bold mb-3">$<%= Number(amount || 0).toFixed(2) %></div>
+      <p class="text-muted mb-3">Use your banking app to scan the QR code below.</p>
+      <img src="/images/paynowqr.jpg" alt="PayNow QR" class="img-fluid rounded shadow-sm" style="max-width: 280px;">
+    </div>
+
+    <div class="split-card">
+      <h3 class="h5 mb-3">Confirm top up</h3>
+      <p class="text-muted">After you complete payment, confirm to credit your wallet.</p>
+      <form method="POST" action="/wallet/paynow/confirm">
+        <button type="submit" class="btn btn-primary w-100 mb-2">I have paid</button>
+      </form>
+      <a href="/wallet" class="btn btn-outline-primary w-100">Cancel</a>
+      <p class="small text-muted mt-3 mb-0">Need help? Contact support with your transaction details.</p>
+    </div>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+<script src="/js/site.js"></script>
+</body>
+</html>
