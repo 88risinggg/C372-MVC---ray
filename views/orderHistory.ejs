@@ -65,6 +65,9 @@
   <% if (errors && errors.length) { %>
     <div class="alert alert-warning"><%= errors[0] %></div>
   <% } %>
+  <% if (success && success.length) { %>
+    <div class="alert alert-success"><%= success[0] %></div>
+  <% } %>
 
   <!-- Main Card -->
   <div class="card glass reveal">
@@ -96,6 +99,7 @@
 
             <tbody>
               <% orders.forEach(order => { %>
+                <% const refundStatus = order.refund_status || "Not refunded"; %>
                 <tr>
                   <td>#<%= order.id %></td>
 
@@ -116,8 +120,12 @@
                   <td>
                     <span class="
                       status-badge
-                      <%= order.refund_status === 'Refunded' ? 'status-danger' : 'status-pending' %>">
-                      <%= order.refund_status || "Not refunded" %>
+                      <%= refundStatus === 'Approved' ? 'status-completed' :
+                          refundStatus === 'Pending' ? 'status-pending' :
+                          refundStatus === 'Refunded' ? 'status-danger' :
+                          refundStatus === 'Rejected' ? 'status-danger' :
+                          'status-pending' %>">
+                      <%= refundStatus %>
                     </span>
                   </td>
 

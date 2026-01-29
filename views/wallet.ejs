@@ -93,7 +93,17 @@
                 <div class="form-check">
                   <input class="form-check-input" type="radio" name="paymentMethod" value="PayNow" id="wallet-pm-paynow">
                   <label class="form-check-label fw-semibold" for="wallet-pm-paynow">PayNow</label>
-                  <p class="small text-muted mb-0">Instant bank transfer via QR.</p>
+                  <p class="small text-muted mb-0">PayNow QR via Stripe checkout.</p>
+                </div>
+              </div>
+            </div>
+
+            <div class="col-12">
+              <div class="split-card">
+                <div class="form-check">
+                  <input class="form-check-input" type="radio" name="paymentMethod" value="GrabPay" id="wallet-pm-grabpay">
+                  <label class="form-check-label fw-semibold" for="wallet-pm-grabpay">GrabPay</label>
+                  <p class="small text-muted mb-0">Authorize GrabPay via Stripe checkout.</p>
                 </div>
               </div>
             </div>
@@ -119,12 +129,6 @@
           <div id="wallet-paypal-section" class="split-card d-none">
             <h6 class="fw-semibold mb-2">PayPal</h6>
             <p class="small text-muted mb-0">You will be redirected to PayPal to approve the payment.</p>
-          </div>
-
-          <div id="wallet-paynow-section" class="split-card d-none">
-            <h6 class="fw-semibold mb-2">PayNow</h6>
-            <p class="small text-muted mb-2">Scan the QR code to top up your wallet.</p>
-            <img src="/images/paynowqr.jpg" alt="PayNow QR" class="img-fluid rounded shadow-sm" style="max-width: 260px;">
           </div>
 
           <div id="wallet-nets-section" class="split-card d-none">
@@ -157,11 +161,10 @@
   const topupRadios = document.querySelectorAll('input[name="paymentMethod"]');
   const stripeSection = document.getElementById("wallet-stripe-section");
   const paypalSection = document.getElementById("wallet-paypal-section");
-  const paynowSection = document.getElementById("wallet-paynow-section");
   const netsSection = document.getElementById("wallet-nets-section");
 
   const showTopupOnly = (section) => {
-    [stripeSection, paypalSection, paynowSection, netsSection].forEach(block => {
+    [stripeSection, paypalSection, netsSection].forEach(block => {
       if (!block) return;
       if (section && block === section) {
         block.classList.remove("d-none");
@@ -178,7 +181,10 @@
         showTopupOnly(paypalSection);
         break;
       case "PayNow":
-        showTopupOnly(paynowSection);
+        showTopupOnly(stripeSection);
+        break;
+      case "GrabPay":
+        showTopupOnly(stripeSection);
         break;
       case "NETS QR":
         showTopupOnly(netsSection);

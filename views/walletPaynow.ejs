@@ -25,7 +25,7 @@
   <div class="page-header page-header--center mb-4">
     <p class="page-kicker">Wallet</p>
     <h1 class="page-title">PayNow top up</h1>
-    <p class="page-subtitle">Scan the QR to top up your wallet balance.</p>
+    <p class="page-subtitle">PayNow top ups are now handled via Stripe Checkout.</p>
   </div>
 
   <% if (errors && errors.length) { %>
@@ -36,18 +36,13 @@
     <div class="split-card text-center">
       <h3 class="h5 mb-2">Amount</h3>
       <div class="display-6 fw-bold mb-3">$<%= Number(amount || 0).toFixed(2) %></div>
-      <p class="text-muted mb-3">Use your banking app to scan the QR code below.</p>
-      <img src="/images/paynowqr.jpg" alt="PayNow QR" class="img-fluid rounded shadow-sm" style="max-width: 280px;">
+      <p class="text-muted mb-0">Return to Wallet and choose PayNow to continue in Stripe Checkout.</p>
     </div>
 
     <div class="split-card">
       <h3 class="h5 mb-3">Confirm top up</h3>
-      <p class="text-muted">After you complete payment, confirm to credit your wallet.</p>
-      <form method="POST" action="/wallet/paynow/confirm">
-        <button type="submit" class="btn btn-primary w-100 mb-2">I have paid</button>
-      </form>
-      <a href="/wallet" class="btn btn-outline-primary w-100">Cancel</a>
-      <p class="small text-muted mt-3 mb-0">Need help? Contact support with your transaction details.</p>
+      <p class="text-muted">PayNow confirmations now happen automatically after Stripe confirms payment.</p>
+      <a href="/wallet" class="btn btn-primary w-100">Back to Wallet</a>
     </div>
   </div>
 </div>

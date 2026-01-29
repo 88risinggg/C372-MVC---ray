@@ -10,9 +10,11 @@ const getStripe = () => {
 
 const toCents = (amount) => Math.round(Number(amount || 0) * 100);
 
-exports.createCheckoutSession = async ({ items, totals, baseUrl, customerEmail }) => {
+exports.createCheckoutSession = async ({ items, totals, baseUrl, customerEmail, paymentMethods }) => {
   const stripe = getStripe();
   const currency = (process.env.STRIPE_CURRENCY || "SGD").toLowerCase();
+  const requestedMethods =
+    Array.isArray(paymentMethods) && paymentMethods.length ? paymentMethods : ["card"];
 
   const lineItems = (items || []).map((item) => ({
     price_data: {
@@ -53,7 +55,7 @@ exports.createCheckoutSession = async ({ items, totals, baseUrl, customerEmail }
 
   return stripe.checkout.sessions.create({
     mode: "payment",
-    payment_method_types: ["card"],
+    payment_method_types: requestedMethods,
     line_items: lineItems,
     success_url: `${baseUrl}/stripe/success?session_id={CHECKOUT_SESSION_ID}`,
     cancel_url: `${baseUrl}/stripe/cancel`,

@@ -68,6 +68,7 @@
 
       <tbody>
         <% orders.forEach(order => { %>
+        <% const refundStatus = order.refund_status || "Not refunded"; %>
         <tr>
           <td><%= order.id %></td>
           <td><%= order.username %></td>
@@ -87,8 +88,8 @@
           </td>
 
           <td>
-            <span class="chip <%= order.refund_status === 'Refunded' ? 'danger' : 'info' %>">
-              <%= order.refund_status || "Not refunded" %>
+            <span class="chip <%= refundStatus === 'Approved' ? 'success' : refundStatus === 'Pending' ? 'warn' : refundStatus === 'Refunded' ? 'danger' : refundStatus === 'Rejected' ? 'danger' : 'info' %>">
+              <%= refundStatus %>
             </span>
           </td>
 

@@ -59,8 +59,9 @@
           <!-- Refund Status -->
           <p>
             <strong>Refund Status:</strong>
-            <span class="chip <%= order.refund_status === 'Refunded' ? 'danger' : 'info' %>">
-              <%= order.refund_status || "Not refunded" %>
+            <% const refundStatus = order.refund_status || "Not refunded"; %>
+            <span class="chip <%= refundStatus === 'Approved' ? 'success' : refundStatus === 'Pending' ? 'warn' : refundStatus === 'Refunded' ? 'danger' : refundStatus === 'Rejected' ? 'danger' : 'info' %>">
+              <%= refundStatus %>
             </span>
           </p>
 
@@ -78,12 +79,25 @@
             <button class="btn btn-primary btn-sm">Update</button>
           </form>
 
-          <form action="/admin/orders/<%= order.id %>/refund" method="POST" class="mt-2">
-            <button class="btn btn-outline-danger btn-sm"
-                    <%= order.refund_status === "Refunded" ? "disabled" : "" %>>
-              Refund Order
-            </button>
-          </form>
+          <% if (refundStatus === "Pending") { %>
+            <div class="d-flex gap-2 mt-2">
+              <form action="/admin/orders/<%= order.id %>/refund-approve" method="POST">
+                <button class="btn btn-outline-success btn-sm">Approve</button>
+              </form>
+              <form action="/admin/orders/<%= order.id %>/refund-reject" method="POST">
+                <button class="btn btn-outline-danger btn-sm">Reject</button>
+              </form>
+            </div>
+          <% } else if (refundStatus === "Approved") { %>
+            <form action="/admin/orders/<%= order.id %>/refund-complete" method="POST" class="mt-2">
+              <button class="btn btn-outline-primary btn-sm">Mark Refunded</button>
+            </form>
+            <p class="text-muted small mt-2 mb-0">Approved. Please wait 3-5 working days.</p>
+          <% } else if (refundStatus === "Rejected") { %>
+            <p class="text-muted small mt-2 mb-0">Refund request rejected.</p>
+          <% } else if (refundStatus === "Refunded") { %>
+            <p class="text-muted small mt-2 mb-0">Refund completed.</p>
+          <% } %>
 
           <p class="mt-3"><strong>Date:</strong> <%= order.created_at.toLocaleString() %></p>
         </div>

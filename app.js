@@ -270,6 +270,19 @@ const normalizePaymentMethod = (value) => {
     return raw ? "Other" : "Unknown";
 };
 
+const getStripePaymentMethods = (method) => {
+    switch (method) {
+        case "Stripe":
+            return ["card"];
+        case "PayNow":
+            return ["paynow"];
+        case "GrabPay":
+            return ["grabpay"];
+        default:
+            return null;
+    }
+};
+
 const validateStock = (cart = []) => {
     const stockChecks = cart.map(item => {
         return new Promise((resolve, reject) => {
@@ -534,8 +547,8 @@ app.get('/cart', checkAuthenticated, (req, res) => {
     res.render('cart', { items, user: req.session.user });
 });
 
-// ADMIN: Refund order (wallet only credits; others mark refunded)
-app.post("/admin/orders/:id/refund", checkAuthenticated, checkAdmin, (req, res) => {
+// ADMIN: Approve refund request
+app.post("/admin/orders/:id/refund-approve", checkAuthenticated, checkAdmin, (req, res) => {
     const orderId = req.params.id;
     connection.query(
         `SELECT orders.id, orders.total, orders.payment_method, orders.refund_status, orders.user_id
@@ -546,32 +559,103 @@ app.post("/admin/orders/:id/refund", checkAuthenticated, checkAdmin, (req, res) 
             if (err) throw err;
             const order = rows[0];
             if (!order) return res.redirect("/admin/orders");
-            if (order.refund_status === "Refunded") {
+            if (order.refund_status !== "Pending") {
                 return res.redirect(`/admin/orders/${orderId}`);
             }
 
-            const total = Number(order.total || 0);
-            const finalizeRefund = () => {
-                connection.query(
-                    "UPDATE orders SET refund_status = ?, refunded_at = NOW() WHERE id = ?",
-                    ["Refunded", orderId],
-                    (err2) => {
-                        if (err2) throw err2;
-                        res.redirect(`/admin/orders/${orderId}`);
-                    }
-                );
-            };
+            connection.query(
+                "UPDATE orders SET refund_status = ?, refunded_at = NULL WHERE id = ?",
+                ["Approved", orderId],
+                (err2) => {
+                    if (err2) throw err2;
+                    res.redirect(`/admin/orders/${orderId}`);
+                }
+            );
+        }
+    );
+});
 
-            if (order.payment_method === "Wallet") {
-                adjustWalletBalance(order.user_id, total)
-                    .then(finalizeRefund)
-                    .catch(err3 => {
-                        console.error("Wallet refund error:", err3);
-                        res.redirect(`/admin/orders/${orderId}`);
-                    });
-            } else {
-                finalizeRefund();
+// ADMIN: Reject refund request
+app.post("/admin/orders/:id/refund-reject", checkAuthenticated, checkAdmin, (req, res) => {
+    const orderId = req.params.id;
+    connection.query(
+        "SELECT id, refund_status FROM orders WHERE id = ?",
+        [orderId],
+        (err, rows) => {
+            if (err) throw err;
+            const order = rows[0];
+            if (!order) return res.redirect("/admin/orders");
+            if (order.refund_status !== "Pending") {
+                return res.redirect(`/admin/orders/${orderId}`);
             }
+
+            connection.query(
+                "UPDATE orders SET refund_status = ?, refunded_at = NULL WHERE id = ?",
+                ["Rejected", orderId],
+                (err2) => {
+                    if (err2) throw err2;
+                    res.redirect(`/admin/orders/${orderId}`);
+                }
+            );
+        }
+    );
+});
+
+// ADMIN: Mark refund completed
+app.post("/admin/orders/:id/refund-complete", checkAuthenticated, checkAdmin, (req, res) => {
+    const orderId = req.params.id;
+    connection.query(
+        "SELECT id, refund_status FROM orders WHERE id = ?",
+        [orderId],
+        (err, rows) => {
+            if (err) throw err;
+            const order = rows[0];
+            if (!order) return res.redirect("/admin/orders");
+            if (order.refund_status !== "Approved") {
+                return res.redirect(`/admin/orders/${orderId}`);
+            }
+
+            connection.query(
+                "UPDATE orders SET refund_status = ?, refunded_at = NOW() WHERE id = ?",
+                ["Refunded", orderId],
+                (err2) => {
+                    if (err2) throw err2;
+                    res.redirect(`/admin/orders/${orderId}`);
+                }
+            );
+        }
+    );
+});
+
+// USER: Request refund
+app.post("/orders/:id/refund-request", checkAuthenticated, (req, res) => {
+    const orderId = req.params.id;
+    connection.query(
+        "SELECT id, refund_status FROM orders WHERE id = ? AND user_id = ?",
+        [orderId, req.session.user.id],
+        (err, rows) => {
+            if (err) throw err;
+            const order = rows[0];
+            if (!order) {
+                req.flash("error", "Order not found.");
+                return res.redirect("/orders");
+            }
+
+            const status = order.refund_status || "Not refunded";
+            if (status === "Pending" || status === "Approved" || status === "Refunded" || status === "Rejected") {
+                req.flash("error", "Refund request is already in progress.");
+                return res.redirect(`/orders/${orderId}`);
+            }
+
+            connection.query(
+                "UPDATE orders SET refund_status = ?, refunded_at = NULL WHERE id = ? AND user_id = ?",
+                ["Pending", orderId, req.session.user.id],
+                (err2) => {
+                    if (err2) throw err2;
+                    req.flash("success", "Refund request submitted. Pending confirmation.");
+                    res.redirect(`/orders/${orderId}`);
+                }
+            );
         }
     );
 });
@@ -595,7 +679,7 @@ app.get("/wallet", checkAuthenticated, (req, res) => {
         });
 });
 
-// Wallet top-up (payment methods: Stripe, PayPal, PayNow, NETS)
+// Wallet top-up (payment methods: Stripe, PayPal, PayNow, GrabPay, NETS)
 app.post("/wallet/topup", checkAuthenticated, (req, res) => {
     const amount = Number(req.body.amount || 0);
     const paymentMethod = (req.body.paymentMethod || "").trim();
@@ -606,23 +690,26 @@ app.post("/wallet/topup", checkAuthenticated, (req, res) => {
         return res.redirect("/wallet");
     }
 
-    if (!["Stripe", "PayPal", "PayNow", "NETS QR"].includes(normalizedPaymentMethod)) {
+    if (!["Stripe", "PayPal", "PayNow", "GrabPay", "NETS QR"].includes(normalizedPaymentMethod)) {
         req.flash("error", "Please select a valid payment method.");
         return res.redirect("/wallet");
     }
 
     const baseUrl = `${req.protocol}://${req.get("host")}`;
+    const stripeMethods = getStripePaymentMethods(normalizedPaymentMethod);
     req.session.pendingTopup = {
-        provider: normalizedPaymentMethod === "NETS QR" ? "nets" : normalizedPaymentMethod.toLowerCase(),
-        amount
+        provider: stripeMethods ? "stripe" : normalizedPaymentMethod === "NETS QR" ? "nets" : normalizedPaymentMethod.toLowerCase(),
+        amount,
+        paymentMethod: normalizedPaymentMethod
     };
 
-    if (normalizedPaymentMethod === "Stripe") {
+    if (stripeMethods) {
         return stripePayments.createCheckoutSession({
             items: [{ productName: "Wallet Top Up", price: amount, quantity: 1 }],
             totals: { deliveryFee: 0, gst: 0 },
             baseUrl,
-            customerEmail: req.session.user?.email
+            customerEmail: req.session.user?.email,
+            paymentMethods: stripeMethods
         })
             .then(session => {
                 req.session.pendingTopup.sessionId = session.id;
@@ -647,10 +734,6 @@ app.post("/wallet/topup", checkAuthenticated, (req, res) => {
                 req.flash("error", "PayPal setup failed. Please try again.");
                 return res.redirect("/wallet");
             });
-    }
-
-    if (normalizedPaymentMethod === "PayNow") {
-        return res.redirect("/wallet/paynow");
     }
 
     return netsQr.generateQrCode(req, res, amount);
@@ -824,7 +907,8 @@ app.post("/checkout", checkAuthenticated, (req, res) => {
             });
     }
 
-    if (paymentMethod === "Stripe") {
+    const stripeMethods = getStripePaymentMethods(normalizedPaymentMethod);
+    if (stripeMethods) {
         return validateStock(cart)
             .then(() => {
                 const totals = calculateTotals(cart);
@@ -839,7 +923,8 @@ app.post("/checkout", checkAuthenticated, (req, res) => {
                     items: cart,
                     totals,
                     baseUrl,
-                    customerEmail: req.session.user?.email
+                    customerEmail: req.session.user?.email,
+                    paymentMethods: stripeMethods
                 });
             })
             .then(session => {
@@ -1200,7 +1285,8 @@ app.get("/orders", checkAuthenticated, (req, res) => {
             res.render("orderHistory", {
                 orders: rows,
                 user: req.session.user,
-                errors: req.flash("error")
+                errors: req.flash("error"),
+                success: req.flash("success")
             });
         }
     );
@@ -1233,7 +1319,8 @@ app.get("/orders/:id", checkAuthenticated, (req, res) => {
                         order,
                         items,
                         user: req.session.user,
-                        errors: req.flash("error")
+                        errors: req.flash("error"),
+                        success: req.flash("success")
                     });
                 }
             );
