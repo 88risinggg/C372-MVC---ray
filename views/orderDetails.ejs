@@ -182,7 +182,7 @@
           <p class="text-muted small mb-3">Charged total: $<%= Number(order.total || 0).toFixed(2) %></p>
 
           <% if (refundStatus === "Pending") { %>
-            <div class="alert alert-warning small mb-3">Refund pending confirmation.</div>
+            <div class="alert alert-warning small mb-3">Refund request submitted. Approval may take 5-10 working days.</div>
           <% } else if (refundStatus === "Approved") { %>
             <div class="alert alert-success small mb-3">Refund approved. Please wait 3-5 working days.</div>
           <% } else if (refundStatus === "Rejected") { %>

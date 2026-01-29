@@ -86,3 +86,27 @@ exports.captureOrder = async (orderId) => {
 
   return response.data;
 };
+
+exports.refundCapture = async (captureId, amount) => {
+  if (!captureId) {
+    throw new Error("PayPal capture ID is missing.");
+  }
+  const accessToken = await getAccessToken();
+  const currency = process.env.PAYPAL_CURRENCY || "SGD";
+  const refundBody = amount
+    ? { amount: { value: Number(amount).toFixed(2), currency_code: currency } }
+    : {};
+
+  const response = await axios.post(
+    `${getBaseUrl()}/v2/payments/captures/${captureId}/refund`,
+    refundBody,
+    {
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+        "Content-Type": "application/json"
+      }
+    }
+  );
+
+  return response.data;
+};

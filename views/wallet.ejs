@@ -66,57 +66,58 @@
         </div>
 
         <div class="col-12">
-          <div class="section-title mb-2">Payment method</div>
-          <div class="row g-2">
-            <div class="col-12">
-              <div class="split-card">
-                <div class="form-check">
-                  <input class="form-check-input" type="radio" name="paymentMethod" value="Stripe" id="wallet-pm-stripe" checked>
-                  <label class="form-check-label fw-semibold" for="wallet-pm-stripe">Card (Stripe)</label>
-                  <p class="small text-muted mb-0">Pay securely by card via Stripe.</p>
-                </div>
+          <div class="checkout-methods">
+            <div class="checkout-methods__header">
+              <div class="checkout-methods__icon" aria-hidden="true">$</div>
+              <div>
+                <p class="checkout-methods__kicker">Payment Method</p>
+                <h3 class="checkout-methods__title">Choose how you'd like to top up</h3>
               </div>
             </div>
 
-            <div class="col-12">
-              <div class="split-card">
-                <div class="form-check">
-                  <input class="form-check-input" type="radio" name="paymentMethod" value="PayPal" id="wallet-pm-paypal">
-                  <label class="form-check-label fw-semibold" for="wallet-pm-paypal">PayPal</label>
-                  <p class="small text-muted mb-0">Pay with your PayPal account.</p>
+            <details class="method-accordion" open>
+              <summary>E-wallets</summary>
+              <div class="method-grid">
+                <div class="method-option">
+                  <input type="radio" name="paymentMethod" value="PayNow" aria-label="PayNow" id="wallet-pm-paynow">
+                  <label class="method-pill method-pill--paynow" for="wallet-pm-paynow">
+                    <span>PayNow</span>
+                    <span class="method-pill__tag">QR</span>
+                  </label>
+                </div>
+                <div class="method-option">
+                  <input type="radio" name="paymentMethod" value="GrabPay" aria-label="GrabPay" id="wallet-pm-grabpay">
+                  <label class="method-pill method-pill--grab" for="wallet-pm-grabpay">
+                    <span>GrabPay</span>
+                  </label>
+                </div>
+                <div class="method-option">
+                  <input type="radio" name="paymentMethod" value="PayPal" aria-label="PayPal" id="wallet-pm-paypal">
+                  <label class="method-pill method-pill--paypal" for="wallet-pm-paypal">
+                    <span>PayPal</span>
+                  </label>
+                </div>
+                <div class="method-option">
+                  <input type="radio" name="paymentMethod" value="NETS QR" aria-label="NETS QR" id="wallet-pm-nets">
+                  <label class="method-pill method-pill--nets" for="wallet-pm-nets">
+                    <span>NETS QR</span>
+                  </label>
                 </div>
               </div>
-            </div>
+            </details>
 
-            <div class="col-12">
-              <div class="split-card">
-                <div class="form-check">
-                  <input class="form-check-input" type="radio" name="paymentMethod" value="PayNow" id="wallet-pm-paynow">
-                  <label class="form-check-label fw-semibold" for="wallet-pm-paynow">PayNow</label>
-                  <p class="small text-muted mb-0">PayNow QR via Stripe checkout.</p>
+            <details class="method-accordion" open>
+              <summary>Cards</summary>
+              <div class="method-grid">
+                <div class="method-option">
+                  <input type="radio" name="paymentMethod" value="Stripe" aria-label="Stripe card" id="wallet-pm-stripe" checked>
+                  <label class="method-pill method-pill--card" for="wallet-pm-stripe">
+                    <span>Card</span>
+                    <span class="method-pill__tag">Stripe</span>
+                  </label>
                 </div>
               </div>
-            </div>
-
-            <div class="col-12">
-              <div class="split-card">
-                <div class="form-check">
-                  <input class="form-check-input" type="radio" name="paymentMethod" value="GrabPay" id="wallet-pm-grabpay">
-                  <label class="form-check-label fw-semibold" for="wallet-pm-grabpay">GrabPay</label>
-                  <p class="small text-muted mb-0">Authorize GrabPay via Stripe checkout.</p>
-                </div>
-              </div>
-            </div>
-
-            <div class="col-12">
-              <div class="split-card">
-                <div class="form-check">
-                  <input class="form-check-input" type="radio" name="paymentMethod" value="NETS QR" id="wallet-pm-nets">
-                  <label class="form-check-label fw-semibold" for="wallet-pm-nets">NETS QR</label>
-                  <p class="small text-muted mb-0">Scan with your banking or wallet app.</p>
-                </div>
-              </div>
-            </div>
+            </details>
           </div>
         </div>
 
@@ -129,6 +130,16 @@
           <div id="wallet-paypal-section" class="split-card d-none">
             <h6 class="fw-semibold mb-2">PayPal</h6>
             <p class="small text-muted mb-0">You will be redirected to PayPal to approve the payment.</p>
+          </div>
+
+          <div id="wallet-paynow-section" class="split-card d-none">
+            <h6 class="fw-semibold mb-2">PayNow</h6>
+            <p class="small text-muted mb-0">You will be redirected to Stripe to scan a PayNow QR and complete the top-up.</p>
+          </div>
+
+          <div id="wallet-grabpay-section" class="split-card d-none">
+            <h6 class="fw-semibold mb-2">GrabPay</h6>
+            <p class="small text-muted mb-0">You will be redirected to Stripe to authorize the GrabPay top-up.</p>
           </div>
 
           <div id="wallet-nets-section" class="split-card d-none">
@@ -161,10 +172,12 @@
   const topupRadios = document.querySelectorAll('input[name="paymentMethod"]');
   const stripeSection = document.getElementById("wallet-stripe-section");
   const paypalSection = document.getElementById("wallet-paypal-section");
+  const paynowSection = document.getElementById("wallet-paynow-section");
+  const grabpaySection = document.getElementById("wallet-grabpay-section");
   const netsSection = document.getElementById("wallet-nets-section");
 
   const showTopupOnly = (section) => {
-    [stripeSection, paypalSection, netsSection].forEach(block => {
+    [stripeSection, paypalSection, paynowSection, grabpaySection, netsSection].forEach(block => {
       if (!block) return;
       if (section && block === section) {
         block.classList.remove("d-none");
@@ -181,10 +194,10 @@
         showTopupOnly(paypalSection);
         break;
       case "PayNow":
-        showTopupOnly(stripeSection);
+        showTopupOnly(paynowSection);
         break;
       case "GrabPay":
-        showTopupOnly(stripeSection);
+        showTopupOnly(grabpaySection);
         break;
       case "NETS QR":
         showTopupOnly(netsSection);

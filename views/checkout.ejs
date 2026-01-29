@@ -221,10 +221,31 @@
                   </div>
                 </div>
 
+                <div id="paynow-section" class="split-card d-none">
+                  <div class="card-body text-center">
+                    <h6 class="fw-semibold mb-3">PayNow</h6>
+                    <p class="small text-muted mb-0">You will be redirected to Stripe to scan a PayNow QR and complete payment.</p>
+                  </div>
+                </div>
+
+                <div id="grabpay-section" class="split-card d-none">
+                  <div class="card-body text-center">
+                    <h6 class="fw-semibold mb-3">GrabPay</h6>
+                    <p class="small text-muted mb-0">You will be redirected to Stripe to authorize the GrabPay payment.</p>
+                  </div>
+                </div>
+
                 <div id="nets-section" class="split-card d-none">
                   <div class="card-body text-center">
                     <h6 class="fw-semibold mb-3">NETS QR</h6>
                     <p class="small text-muted mb-0">You will be redirected to a NETS QR page to scan and complete payment.</p>
+                  </div>
+                </div>
+
+                <div id="cod-section" class="split-card d-none">
+                  <div class="card-body text-center">
+                    <h6 class="fw-semibold mb-3">Cash on Delivery</h6>
+                    <p class="small text-muted mb-0">Pay in cash when your order arrives.</p>
                   </div>
                 </div>
               </div>
@@ -253,10 +274,13 @@
     const stripeSection = document.getElementById("stripe-section");
     const walletSection = document.getElementById("wallet-section");
     const paypalSection = document.getElementById("paypal-section");
+    const paynowSection = document.getElementById("paynow-section");
+    const grabpaySection = document.getElementById("grabpay-section");
     const netsSection = document.getElementById("nets-section");
+    const codSection = document.getElementById("cod-section");
 
     const showOnly = (section) => {
-      [stripeSection, walletSection, paypalSection, netsSection].forEach(block => {
+      [stripeSection, walletSection, paypalSection, paynowSection, grabpaySection, netsSection, codSection].forEach(block => {
         if (!block) return;
         if (section && block === section) {
           block.classList.remove("d-none");
@@ -270,16 +294,16 @@
       const selected = document.querySelector('input[name="paymentMethod"]:checked');
       switch (selected?.value) {
         case "PayNow":
-          showOnly(stripeSection);
+          showOnly(paynowSection);
           break;
         case "GrabPay":
-          showOnly(stripeSection);
+          showOnly(grabpaySection);
           break;
         case "NETS QR":
           showOnly(netsSection);
           break;
         case "Cash on Delivery":
-          showOnly(null);
+          showOnly(codSection);
           break;
         case "PayPal":
           showOnly(paypalSection);

@@ -303,13 +303,13 @@ const validateStock = (cart = []) => {
     return Promise.all(stockChecks);
 };
 
-const createOrderFromCart = (userId, cart = [], paymentMethod) => {
+const createOrderFromCart = (userId, cart = [], paymentMethod, paymentProvider = null, providerRef = null) => {
     return new Promise((resolve, reject) => {
         const totals = calculateTotals(cart);
         const method = normalizePaymentMethod(paymentMethod);
         connection.query(
-            "INSERT INTO orders (user_id, total, payment_method, orderStatus) VALUES (?, ?, ?, ?)",
-            [userId, totals.total, method, "Preparing"],
+            "INSERT INTO orders (user_id, total, payment_method, orderStatus, payment_provider, provider_ref) VALUES (?, ?, ?, ?, ?, ?)",
+            [userId, totals.total, method, "Preparing", paymentProvider, providerRef],
             (err, orderResult) => {
                 if (err) return reject(err);
 
@@ -492,7 +492,9 @@ app.get("/admin/orders/:id", checkAuthenticated, checkAdmin, (req, res) => {
                     res.render("adminOrderDetails", {
                         order,
                         items,
-                        user: req.session.user
+                        user: req.session.user,
+                        errors: req.flash("error"),
+                        success: req.flash("success")
                     });
                 }
             );
@@ -551,7 +553,7 @@ app.get('/cart', checkAuthenticated, (req, res) => {
 app.post("/admin/orders/:id/refund-approve", checkAuthenticated, checkAdmin, (req, res) => {
     const orderId = req.params.id;
     connection.query(
-        `SELECT orders.id, orders.total, orders.payment_method, orders.refund_status, orders.user_id
+        `SELECT orders.id, orders.total, orders.payment_method, orders.refund_status, orders.user_id, orders.payment_provider, orders.provider_ref
          FROM orders
          WHERE orders.id = ?`,
         [orderId],
@@ -563,14 +565,73 @@ app.post("/admin/orders/:id/refund-approve", checkAuthenticated, checkAdmin, (re
                 return res.redirect(`/admin/orders/${orderId}`);
             }
 
-            connection.query(
-                "UPDATE orders SET refund_status = ?, refunded_at = NULL WHERE id = ?",
-                ["Approved", orderId],
-                (err2) => {
-                    if (err2) throw err2;
-                    res.redirect(`/admin/orders/${orderId}`);
+            const total = Number(order.total || 0);
+            const provider = (order.payment_provider || "").toLowerCase();
+            const providerRef = order.provider_ref;
+
+            const approveOnly = () => {
+                connection.query(
+                    "UPDATE orders SET refund_status = ?, refunded_at = NULL WHERE id = ?",
+                    ["Approved", orderId],
+                    (err2) => {
+                        if (err2) throw err2;
+                        req.flash("success", "Refund approved. Please wait 3-5 working days.");
+                        res.redirect(`/admin/orders/${orderId}`);
+                    }
+                );
+            };
+
+            const finalizeRefund = () => {
+                connection.query(
+                    "UPDATE orders SET refund_status = ?, refunded_at = NOW() WHERE id = ?",
+                    ["Refunded", orderId],
+                    (err2) => {
+                        if (err2) throw err2;
+                        req.flash("success", "Refund completed.");
+                        res.redirect(`/admin/orders/${orderId}`);
+                    }
+                );
+            };
+
+            if (order.payment_method === "Wallet") {
+                return adjustWalletBalance(order.user_id, total)
+                    .then(finalizeRefund)
+                    .catch(err3 => {
+                        console.error("Wallet refund error:", err3);
+                        req.flash("error", "Wallet refund failed. Please try again.");
+                        res.redirect(`/admin/orders/${orderId}`);
+                    });
+            }
+
+            if (provider === "stripe") {
+                if (!providerRef) {
+                    req.flash("error", "Stripe payment reference missing.");
+                    return res.redirect(`/admin/orders/${orderId}`);
                 }
-            );
+                return stripePayments.refundPayment(providerRef)
+                    .then(() => finalizeRefund())
+                    .catch(err3 => {
+                        console.error("Stripe refund error:", err3);
+                        req.flash("error", "Stripe refund failed. Please try again.");
+                        res.redirect(`/admin/orders/${orderId}`);
+                    });
+            }
+
+            if (provider === "paypal") {
+                if (!providerRef) {
+                    req.flash("error", "PayPal capture ID missing.");
+                    return res.redirect(`/admin/orders/${orderId}`);
+                }
+                return paypal.refundCapture(providerRef, total)
+                    .then(() => finalizeRefund())
+                    .catch(err3 => {
+                        console.error("PayPal refund error:", err3);
+                        req.flash("error", "PayPal refund failed. Please try again.");
+                        res.redirect(`/admin/orders/${orderId}`);
+                    });
+            }
+
+            return approveOnly();
         }
     );
 });
@@ -652,7 +713,7 @@ app.post("/orders/:id/refund-request", checkAuthenticated, (req, res) => {
                 ["Pending", orderId, req.session.user.id],
                 (err2) => {
                     if (err2) throw err2;
-                    req.flash("success", "Refund request submitted. Pending confirmation.");
+                    req.flash("success", "Refund request submitted. Approval may take 5-10 working days.");
                     res.redirect(`/orders/${orderId}`);
                 }
             );
@@ -888,7 +949,7 @@ app.post("/checkout", checkAuthenticated, (req, res) => {
                     req.session.user.wallet_balance = balance - totals.total;
                 });
             })
-            .then(() => createOrderFromCart(userId, cart, normalizedPaymentMethod))
+            .then(() => createOrderFromCart(userId, cart, normalizedPaymentMethod, "wallet", null))
             .then(({ orderId, totals: createdTotals }) => {
                 req.session.cart = [];
                 res.render("paymentSuccess", {
@@ -982,7 +1043,7 @@ app.post("/checkout", checkAuthenticated, (req, res) => {
     }
 
     validateStock(cart)
-        .then(() => createOrderFromCart(req.session.user.id, cart, normalizedPaymentMethod))
+        .then(() => createOrderFromCart(req.session.user.id, cart, normalizedPaymentMethod, null, null))
         .then(({ orderId, totals }) => {
             req.session.cart = [];
             res.render("paymentSuccess", {
@@ -1045,7 +1106,11 @@ app.get("/paypal/success", checkAuthenticated, (req, res) => {
             if (capture?.status !== "COMPLETED") {
                 throw new Error("PayPal capture not completed.");
             }
-            return createOrderFromCart(req.session.user.id, pending.cart, pending.paymentMethod);
+            const captureId = capture?.purchase_units?.[0]?.payments?.captures?.[0]?.id;
+            if (!captureId) {
+                throw new Error("PayPal capture ID missing.");
+            }
+            return createOrderFromCart(req.session.user.id, pending.cart, pending.paymentMethod, "paypal", captureId);
         })
         .then(({ orderId: internalOrderId, totals }) => {
             req.session.cart = [];
@@ -1129,7 +1194,11 @@ app.get("/stripe/success", checkAuthenticated, async (req, res) => {
             throw new Error("Stripe payment not completed.");
         }
 
-        const { orderId, totals } = await createOrderFromCart(req.session.user.id, pending.cart, pending.paymentMethod);
+        const paymentIntent = session?.payment_intent;
+        if (!paymentIntent) {
+            throw new Error("Stripe payment intent missing.");
+        }
+        const { orderId, totals } = await createOrderFromCart(req.session.user.id, pending.cart, pending.paymentMethod, "stripe", paymentIntent);
         req.session.cart = [];
         req.session.pendingOrder = null;
         res.render("paymentSuccess", {
@@ -1183,7 +1252,7 @@ app.get("/nets-qr/success", checkAuthenticated, (req, res) => {
         return res.redirect("/checkout");
     }
 
-    createOrderFromCart(req.session.user.id, pending.cart, pending.paymentMethod)
+    createOrderFromCart(req.session.user.id, pending.cart, pending.paymentMethod, "nets", null)
         .then(({ orderId, totals }) => {
             req.session.cart = [];
             req.session.pendingOrder = null;

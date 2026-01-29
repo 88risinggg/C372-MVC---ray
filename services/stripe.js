@@ -67,3 +67,13 @@ exports.retrieveSession = async (sessionId) => {
   const stripe = getStripe();
   return stripe.checkout.sessions.retrieve(sessionId);
 };
+
+exports.refundPayment = async (paymentIntentId) => {
+  const stripe = getStripe();
+  if (!paymentIntentId) {
+    throw new Error("Stripe payment intent is missing.");
+  }
+  return stripe.refunds.create({
+    payment_intent: paymentIntentId
+  });
+};
